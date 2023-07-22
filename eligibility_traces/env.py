@@ -1,6 +1,7 @@
 import gymnasium as gym
 import numpy as np
 import random
+import argparse
 
 import torch
 import torch.nn as nn
@@ -92,9 +93,14 @@ class grid_world(gym.Env):
             pass        
 
 
-    def step(self, action):
+    def step(self, action, algorithm):
         """
         action: there are total of 4 actions: left, right, up, down
         correspond to [0, 1, 2, 3]
         """
+        if algorithm == "sgtd":
+            pass
+
+
+
 
