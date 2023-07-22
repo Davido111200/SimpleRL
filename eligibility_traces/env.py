@@ -19,6 +19,8 @@ class grid_world(gym.Env):
         self.target_pos = torch.tensor([1, 1]) # fixed target - change later
         self.terminated = False
         self.cur_pos = torch.tensor([0, 0]) # current position - fixed as the starting point
+        self.n_observations = 2
+        self.n_actions = 4
 
     def reset(self):
         self.cur_pos, self.terminated = torch.tensor([0, 0]), False
@@ -77,13 +79,21 @@ class grid_world(gym.Env):
             pass        
 
 
-    def step(self, action, algorithm):
+    def step(self, action):
         """
         action: there are total of 4 actions: left, right, up, down
         correspond to [0, 1, 2, 3]
         """
-        if algorithm == "sgtd":
-            pass
+        action = action.item()
+
+        temp = self.make_a_move(action)
+        next_state = self.check_pos(temp)
+
+        terminated = torch.all(next_state.eq(self.target_pos))
+        reward = 1 if terminated else 0
+
+        return next_state, reward, terminated, False, {}
+    
 
 
 
