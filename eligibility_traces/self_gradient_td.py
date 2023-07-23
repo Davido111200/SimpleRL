@@ -85,7 +85,7 @@ def main(n_eps, max_ts):
 
             # iterate
             state = next_state
-            
+
 
 
 
@@ -96,7 +96,7 @@ def main(n_eps, max_ts):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--n_epochs", type=int, default=10)
-    parser.add_argument("max_ts", type=int, default=100)
+    parser.add_argument("--max_ts", type=int, default=100)
 
     args = parser.parse_args()
 
