@@ -1,5 +1,6 @@
 from env import grid_world
 import numpy as np
+import argparse
 
 import torch
 import torch.nn as nn
@@ -24,10 +25,8 @@ class policy_network(nn.Module):
         x = F.relu(self.fc1(x))
         return self.fc2(x) # stands for action probabilities
     
-def main():
+def main(n_eps, max_ts):
     # HYPERS
-    N_EPS = 10
-    MAX_TS = 100
     GAMMA = 0.9
     ALPHA = 0.9
     env = grid_world(n_rows=10, n_cols=10)
@@ -36,4 +35,11 @@ def main():
     policy_net = policy_network(env.n_observations, env.n_actions)
     optimizer = optim.AdamW(policy_net.parameters())
 
-    
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--n_epochs", type=int, default=10)
+    parser.add_argument("max_ts", type=int, default=100)
+
+    args = parser.parse_args()
+
+    main(args.n_epochs, args.max_ts)
