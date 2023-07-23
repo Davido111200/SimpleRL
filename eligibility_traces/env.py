@@ -14,7 +14,7 @@ class grid_world(gym.Env):
         super(grid_world, self).__init__()
         self.n_rows = n_rows
         self.n_cols = n_cols 
-        self.grid = torch.zeros(shape=(self.n_rows, self.n_cols))
+        self.grid = torch.zeros(size=(self.n_rows, self.n_cols))
         self.starting_pos = torch.tensor([0, 0]) # fixed starting point
         self.target_pos = torch.tensor([1, 1]) # fixed target - change later
         self.terminated = False
@@ -23,7 +23,7 @@ class grid_world(gym.Env):
         self.n_actions = 4
 
     def reset(self):
-        self.cur_pos, self.terminated = torch.tensor([0, 0]), False
+        self.cur_pos, self.terminated = torch.tensor([0., 0.]), False
         return self.cur_pos, self.terminated
     
     def sample(self):
@@ -42,11 +42,15 @@ class grid_world(gym.Env):
             new_row = 0
         elif cur_row >= self.n_rows:
             new_row = self.n_rows
+        else:
+            new_row = cur_row
     
         if cur_col < 0:
             new_col = 0
         elif cur_col >= self.n_cols:
             new_col = self.n_cols
+        else:
+            new_col = cur_col
         
         # return a flag to see if agent violates the environment
         if cur_row == new_row and cur_col == new_col:
@@ -70,7 +74,8 @@ class grid_world(gym.Env):
         elif action == 3:
             new_pos = torch.tensor([self.cur_pos[0] + 1, self.cur_pos[1]])
 
-        return new_pos
+        # update the new_position
+        self.cur_pos = new_pos
 
     def action_selection(self, threshold, policy, state):
         """
@@ -79,7 +84,7 @@ class grid_world(gym.Env):
         temp = random.random() 
         if temp < threshold:
             # return a randomly selected action ( current sample is from 4 actions)
-            return torch.tensor(self.sample(), dtype=torch.int, device=device)
+            return torch.tensor(self.sample(), dtype=torch.int64, device=device)
         else:
             # based on the function approximation, choose the greedy action
             return torch.argmax(policy(state))
@@ -92,8 +97,8 @@ class grid_world(gym.Env):
         """
         action = action.item()
 
-        temp = self.make_a_move(action)
-        next_state = self.check_pos(temp)
+        self.make_a_move(action)
+        next_state, flag = self.check_pos()
 
         terminated = torch.all(next_state.eq(self.target_pos))
         reward = 1 if terminated else 0

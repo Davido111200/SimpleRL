@@ -24,12 +24,10 @@ class function_approximation(nn.Module):
         self.n_inputs = n_inputs
         self.n_hiddens = n_hiddens
         self.n_outputs = n_outputs
-        self.fc1 = nn.Linear(self.n_inputs, self.outputs, device=device)
-        # self.fc2 = nn.Linear(self.n_hiddens, self.n_outputs, device=device)
+        self.fc1 = nn.Linear(self.n_inputs, self.n_outputs, device=device)
 
     def forward(self, x):
-        # x = F.relu(self.fc1(x))
-        x = self.fc1(x)
+        x = F.relu(self.fc1(x))
         return x # stands for action probabilities
     
 
@@ -61,11 +59,15 @@ def main(n_eps, max_ts):
         state, terminated = env.reset()
         z = torch.zeros((n_outputs, 1))
         while not terminated:
-            action = env.action_selection(threshold=EPSILON, policy=policy_net, state=state)
-            next_state, reward, terminated, truncated, _ = env.step(action=action.item())
+            action = env.action_selection(threshold=EPSILON, policy=value_approximator, state=state)
+            next_state, reward, terminated, truncated, _ = env.step(action=action)
 
             # forward pass to get the output
             state_values = value_approximator(state)
+
+            print(state_values)
+            quit()
+
             state_values.backward()
 
             # access the weights of the linear layer
@@ -85,12 +87,6 @@ def main(n_eps, max_ts):
 
             # iterate
             state = next_state
-
-
-
-
-
-
 
 
 if __name__ == "__main__":
