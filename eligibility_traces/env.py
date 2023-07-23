@@ -26,6 +26,12 @@ class grid_world(gym.Env):
         self.cur_pos, self.terminated = torch.tensor([0, 0]), False
         return self.cur_pos, self.terminated
     
+    def sample(self):
+        """
+        randomly select an action - can be seen as the behavior policy
+        """
+        return random.randint(0, 3)
+    
     def check_pos(self):
         """
         check out of bound positions
@@ -66,17 +72,17 @@ class grid_world(gym.Env):
 
         return new_pos
 
-    def action_selection(self, threshold):
+    def action_selection(self, threshold, policy, state):
         """
         current policy follow epsilon-greedy
         """
         temp = random.random() 
         if temp < threshold:
             # return a randomly selected action ( current sample is from 4 actions)
-            return torch.randint(low=0, high=4, size=(1, ))
+            return torch.tensor(self.sample(), dtype=torch.int, device=device)
         else:
             # based on the function approximation, choose the greedy action
-            pass        
+            return torch.argmax(policy(state))
 
 
     def step(self, action):
