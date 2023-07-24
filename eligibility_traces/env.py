@@ -21,9 +21,10 @@ class grid_world(gym.Env):
         self.cur_pos = torch.tensor([0, 0]) # current position - fixed as the starting point
         self.n_observations = 2
         self.n_actions = 4
+        self.total_ts = 0
 
     def reset(self):
-        self.cur_pos, self.terminated = torch.tensor([0., 0.]), False
+        self.cur_pos, self.terminated = torch.tensor([0, 0], dtype=torch.float32), False
         return self.cur_pos, self.terminated
     
     def sample(self):
@@ -58,7 +59,11 @@ class grid_world(gym.Env):
         else:
             flag = False
         
-        return torch.tensor([new_row, new_col]), flag
+
+        new_pos = torch.tensor([float(new_row), float(new_col)], device=device)
+
+        
+        return new_pos, flag
         
     def make_a_move(self, action):
         """
@@ -66,13 +71,13 @@ class grid_world(gym.Env):
         WARNING: new postion of this methods might contain out of bound elements -> needs checking after
         """
         if action == 0:
-            new_pos = torch.tensor([self.cur_pos[0], self.cur_pos[1] - 1])
+            new_pos = torch.tensor([self.cur_pos[0], (self.cur_pos[1] - 1)])
         elif action == 1:
-            new_pos = torch.tensor([self.cur_pos[0], self.cur_pos[1] + 1])
+            new_pos = torch.tensor([self.cur_pos[0], (self.cur_pos[1] + 1)])
         elif action == 2:
-            new_pos = torch.tensor([self.cur_pos[0] - 1, self.cur_pos[1]])
+            new_pos = torch.tensor([(self.cur_pos[0] - 1), self.cur_pos[1]])
         elif action == 3:
-            new_pos = torch.tensor([self.cur_pos[0] + 1, self.cur_pos[1]])
+            new_pos = torch.tensor([(self.cur_pos[0] + 1), self.cur_pos[1]])
 
         # update the new_position
         self.cur_pos = new_pos
@@ -84,7 +89,7 @@ class grid_world(gym.Env):
         temp = random.random() 
         if temp < threshold:
             # return a randomly selected action ( current sample is from 4 actions)
-            return torch.tensor(self.sample(), dtype=torch.int64, device=device)
+            return torch.tensor(self.sample(), dtype=torch.float32, device=device)
         else:
             # based on the function approximation, choose the greedy action
             return torch.argmax(policy(state))
