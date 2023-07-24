@@ -90,14 +90,14 @@ def main(n_eps, max_ts):
             # iterate
             state = next_state
 
-            plotter.append(td_error.detach().numpy())
+            plotter.append(np.abs(td_error.detach().numpy()))
 
     print("Finished training")
 
 def plotting(y):
     x = range(len(y))
 
-    plt.plot(x, y, marker='o', linestyle='-', color='b')
+    plt.plot(x, y)
 
     plt.xlabel('Index')
     plt.ylabel('Data Points')
