@@ -26,7 +26,7 @@ class policy_network(nn.Module):
     def forward(self, x):
         x = self.state_to_tensor(x)
         x = F.relu(self.fc1(x))
-        action_probs = F.softmax(self.fc2(x))
+        action_probs = F.softmax(self.fc2(x), dim=1)
         selected_action = self.sample()
         selected_action_prob = action_probs[selected_action]
         selected_action_log_prob = selected_action_prob / action_probs
@@ -43,11 +43,11 @@ class policy_network(nn.Module):
 
 def main(n_epochs):
     policy = policy_network(n_inputs=1, hidden=128, n_outputs=env.n_actions)
-    optimizer = optim.SGD(policy.parameters())
+    optimizer = optim.AdamW(policy.parameters())
 
     ALPHA = 0.9
     GAMMA = 0.9
-    EPS = 0.3
+
     for epoch in range(n_epochs):
         states = []
         actions = []
@@ -77,20 +77,15 @@ def main(n_epochs):
         discounted_reward_tensor = torch.tensor(discounted_reward, dtype=torch.float32, device=device)
         log_probs = torch.stack(lp)
 
-        policy_gradient = -(log_probs * discounted_reward_tensor).mean()
+        policy_gradient = -(ALPHA * log_probs * discounted_reward_tensor).mean()
         
         policy.zero_grad()
         policy_gradient.backward()
         optimizer.step()
-        
-
-            
-
-    
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--n_epochs", type=int, device=device)
+    parser.add_argument("--n_epochs", type=int)
 
     arguments = parser.parse_args()
 

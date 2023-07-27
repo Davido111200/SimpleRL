@@ -9,7 +9,7 @@ device = torch.device("cpu")
 class short_env(object):
     def __init__(self, n_states) -> None:
         self.n_states = n_states
-        self.grid = np.zeros(shape=(self.n_states, 1), device=device)
+        self.grid = np.zeros(shape=(self.n_states, 1))
         self.start_pos = 0 # starting state is always 0
         self.current_pos = 0
         self.flag = False # at the starting state, flag is false
@@ -22,10 +22,10 @@ class short_env(object):
         elif current_pos >= self.n_states :
             current_pos = self.n_states - 1
         else:
-            current_pos = self.n_states
+            pass
         # update the current pos to self.current_pos
         self.current_pos = current_pos
-        return current_pos
+        return self.current_pos
     
 
     def make_a_move(self, action, flag):
@@ -69,7 +69,7 @@ class short_env(object):
         return next_state, reward, terminated
     
     def reset(self):
-        self.current_pos, self.terminated, self.flag = self.start_pos, False, False
+        self.current_pos, self.terminated, self.flag = 0, False, False
         return self.current_pos, self.terminated
     
 
