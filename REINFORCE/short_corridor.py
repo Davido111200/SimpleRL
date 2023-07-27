@@ -14,6 +14,7 @@ class short_env(object):
         self.current_pos = 0
         self.flag = False # at the starting state, flag is false
         self.terminated = False
+        self.n_actions = 2
 
     def check_current_state(self, current_pos):
         if current_pos < 0:
@@ -63,9 +64,11 @@ class short_env(object):
         next_state, terminated = self.make_a_move(action, self.flag)
         reward = 1 if terminated else -1
 
+        state = self.current_pos
+
         self.current_pos = next_state
 
-        return next_state, reward, terminated
+        return state, reward, next_state , terminated
     
     def reset(self):
         self.current_pos, self.terminated, self.flag = self.start_pos, False, False
