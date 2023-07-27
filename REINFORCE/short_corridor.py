@@ -64,11 +64,9 @@ class short_env(object):
         next_state, terminated = self.make_a_move(action, self.flag)
         reward = 1 if terminated else -1
 
-        state = self.current_pos
-
         self.current_pos = next_state
 
-        return state, reward, next_state , terminated
+        return next_state, reward, terminated
     
     def reset(self):
         self.current_pos, self.terminated, self.flag = self.start_pos, False, False
