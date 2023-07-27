@@ -77,6 +77,7 @@ def main(n_epochs):
         discounted_reward_tensor = torch.tensor(discounted_reward, dtype=torch.float32, device=device)
         log_probs = torch.stack(lp)
 
+        # as for gradient ascent, we include negative sign to revert to positive while using backward()
         policy_gradient = -(ALPHA * log_probs * discounted_reward_tensor).mean()
         
         policy.zero_grad()
