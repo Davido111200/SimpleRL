@@ -57,6 +57,8 @@ class short_env(object):
         action only in [0, 1], where 0 is a left and 1 is a right action
         """
         
+        self.flag = False
+        
         # check for special state
         if self.current_pos == 1:
             self.flag = True
