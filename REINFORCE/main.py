@@ -29,16 +29,10 @@ class policy_network(nn.Module):
         x = self.state_to_tensor(x)
         x = F.relu(self.fc1(x))
         action_probs = F.softmax(self.fc2(x), dim=0)
-        selected_action = self.select_action(action_probs=action_probs, eps=0.1)
+        selected_action = torch.multinomial(action_probs, num_samples=1)
         selected_action_prob = action_probs[selected_action]
         selected_action_log_prob = torch.log(selected_action_prob)
         return selected_action, selected_action_log_prob
-        
-    def select_action(self, action_probs, eps=0.1):
-        if random.random() < eps:
-            return np.random.randint(low=0, high=env.n_actions)
-        else:
-            return torch.argmax(action_probs).detach().numpy()
 
     def state_to_tensor(self, state):
         # one-hot
@@ -92,9 +86,8 @@ def main(n_epochs):
 
         # save the reward per episode (normalize) for plotting
         total_reward.append(torch.mean(discounted_reward_tensor).item())
-        
 
-        log_probs = torch.stack(lp)
+        log_probs = torch.stack(lp).flatten()
 
         assert log_probs.shape == discounted_reward_tensor.shape, "hahant"
 

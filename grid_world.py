@@ -26,7 +26,7 @@ class grid_world(gym.Env):
     def reset(self):
         self.cur_pos, self.terminated = torch.tensor([0, 0], dtype=torch.float32), False
         return self.cur_pos, self.terminated
-        
+
     def sample(self):
         """
         randomly select an action - can be seen as the behavior policy
