@@ -62,7 +62,7 @@ class short_env(object):
             self.flag = True
 
         next_state, terminated = self.make_a_move(action, self.flag)
-        reward = 1 if terminated else -1
+        reward = 0 if terminated else -1
 
         self.current_pos = next_state
 
