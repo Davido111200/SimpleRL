@@ -2,6 +2,8 @@
 
 
 # Set the values for n_epochs
-n_epochs=200
+n_runs=100
+n_epochs=400
 
-python3 main.py --n_epochs "$n_epochs" 
+
+python3 main.py --n_epochs "$n_epochs" --n_runs "$n_runs"
