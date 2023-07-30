@@ -31,8 +31,7 @@ class policy_network(nn.Module):
         action_probs = F.softmax(self.fc2(x), dim=0)
         selected_action = torch.multinomial(action_probs, num_samples=1)
         selected_action_prob = action_probs[selected_action]
-        selected_action_log_prob = torch.log(selected_action_prob)
-        return selected_action, selected_action_log_prob
+        return selected_action, selected_action_prob
 
     def state_to_tensor(self, state):
         # one-hot
@@ -45,60 +44,63 @@ class policy_network(nn.Module):
         return np.random.randint(low=0, high=env.n_actions)
 
 def main(n_epochs, n_runs):
-    total_reward_per_run = []
+    G0 = np.zeros((n_runs, n_epochs))
 
     for run in range(n_runs):
         policy = policy_network(n_inputs=env.n_states, hidden=128, n_outputs=env.n_actions)
-        optimizer = optim.AdamW(policy.parameters())
+        optimizer = optim.SGD(policy.parameters(), lr=0.01)
 
         ALPHA = 2* 1e-13
         GAMMA = 0.9
+        torch.autograd.set_detect_anomaly(True)
 
         total_reward = []
         for epoch in range(n_epochs):
             states = []
             actions = []
             rewards = [] # reward counts from 1, while the 2 aboves are from 0
-            lp = []
+            pr = []
             state, terminated = env.reset()
             states.append(state) # first state
 
             while not terminated:
                 # generate a whole trajectory
-                action, selected_action_log_prob = policy(state)
+                action, selected_action_prob = policy(state)
                 
                 next_state, reward, terminated = env.step(action)
                 
                 actions.append(action)
                 states.append(next_state)
                 rewards.append(reward)
-                lp.append(selected_action_log_prob)
+                pr.append(torch.tensor(selected_action_prob, dtype=torch.float32, device=device, requires_grad=True))
 
                 state = next_state 
 
-            discounted_reward = []
-            for t in range(len(rewards)):
-                G = 0
-                for k in range(t, len(rewards)):
-                    G += (GAMMA ** k) * rewards[k]
-                discounted_reward.append(G * GAMMA ** t)
+            quit()
+
+            # calculating the discounted rewards
+            # Compute the discounted rewards
+            G0[run, epoch] = np.sum(rewards)
+            discounted_reward = np.zeros_like(rewards, dtype=np.float32)
+            running_sum = 0
+            for t in reversed(range(len(rewards))):
+                running_sum = rewards[t] + GAMMA * running_sum
+                discounted_reward[t] = running_sum
 
             discounted_reward_tensor = torch.tensor(discounted_reward, dtype=torch.float32, device=device)
+            log_probs_tensor = torch.log(torch.stack(pr))
 
-            # save the reward per episode (normalize) for plotting
-            total_reward.append(torch.mean(discounted_reward_tensor).item())
+            loss = -ALPHA * (discounted_reward_tensor * log_probs_tensor).sum()
 
-            log_probs = torch.stack(lp).flatten()
-            
-            # there is a negative sign here as the algorithm requires gradient ascent
-            policy_gradient = -(ALPHA * log_probs * discounted_reward_tensor).mean()
-            
-            policy.zero_grad()
-            policy_gradient.backward()
+            optimizer.zero_grad()
+            loss.backward()
             optimizer.step()
+            # save the reward per episode (normalize) for plotting
 
-        total_reward_per_run.append(total_reward)
-    result_reward = [sum(x) for x in zip(*total_reward_per_run)]
+
+    result_reward = [sum(x) for x in zip(*G0)]
+    print(result_reward)
+    quit()
 
     def plot(rewards):
         window_size = 100
@@ -123,7 +125,7 @@ def main(n_epochs, n_runs):
         plt.grid(True)
         plt.show()
     
-    plot(total_reward_per_run)
+    plot(result_reward)
         
 
 if __name__ == "__main__":
