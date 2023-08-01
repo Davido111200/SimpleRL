@@ -45,6 +45,7 @@ def main(n_epochs):
     alph_w = 0.3
     
     total_rewards = []
+    total_td_error = []
 
     torch.autograd.set_detect_anomaly(True)
 
@@ -53,13 +54,15 @@ def main(n_epochs):
 
     for epoch in range(n_epochs):
         if epoch > 0:
-            print("Epoch: {} - total reward: {}".format(epoch, total_rewards[-1]))
+            # print("Epoch: {} - total reward: {}".format(epoch, total_rewards[-1]))
+            print("Epoch: {} - total reward: {}".format(epoch, total_td_error[-1].item()))
         state, _ = env.reset()
         terminated = False
         z_thet = [torch.zeros_like(param, dtype=torch.float32) for param in actor.parameters()]
         z_w = [torch.zeros_like(param, dtype=torch.float32) for param in critic.parameters()]
         I = 1
         reward_epoch = 0
+        td_error_epoch = 0
         while not terminated:
             state = torch.as_tensor(state, dtype=torch.float32, device=device)
             action, action_probs = actor(state)
@@ -74,6 +77,7 @@ def main(n_epochs):
 
             # td error
             td_error = target.detach() - estimated_state_val
+            td_error_epoch += td_error
 
 
             ## trace w - update
@@ -128,6 +132,8 @@ def main(n_epochs):
             state = next_state  
 
         total_rewards.append(reward_epoch)
+        total_td_error.append(td_error_epoch)
+
 
 
 
