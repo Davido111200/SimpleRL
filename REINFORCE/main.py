@@ -68,15 +68,13 @@ def main(n_epochs, n_runs):
                 action, selected_action_prob = policy(state)
                 
                 next_state, reward, terminated = env.step(action)
-                
+
                 actions.append(action)
                 states.append(next_state)
                 rewards.append(reward)
                 pr.append(torch.tensor(selected_action_prob, dtype=torch.float32, device=device, requires_grad=True))
 
                 state = next_state 
-
-            quit()
 
             # calculating the discounted rewards
             # Compute the discounted rewards
@@ -99,8 +97,6 @@ def main(n_epochs, n_runs):
 
 
     result_reward = [sum(x) for x in zip(*G0)]
-    print(result_reward)
-    quit()
 
     def plot(rewards):
         window_size = 100
