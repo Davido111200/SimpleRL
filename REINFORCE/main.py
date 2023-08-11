@@ -11,7 +11,7 @@ import tqdm
 import matplotlib.pyplot as plt
 import matplotlib
 
-device = torch.device("cpu")
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 env = short_env(n_states=4)
 
@@ -55,6 +55,9 @@ def main(n_epochs, n_runs):
         torch.autograd.set_detect_anomaly(True)
 
         total_reward = []
+        if run % 10 == 0:
+            print(G0)
+
         for epoch in range(n_epochs):
             states = []
             actions = []
@@ -85,6 +88,7 @@ def main(n_epochs, n_runs):
                 running_sum = rewards[t] + GAMMA * running_sum
                 discounted_reward[t] = running_sum
 
+
             discounted_reward_tensor = torch.tensor(discounted_reward, dtype=torch.float32, device=device)
             log_probs_tensor = torch.log(torch.stack(pr))
 
@@ -97,6 +101,8 @@ def main(n_epochs, n_runs):
 
 
     result_reward = [sum(x) for x in zip(*G0)]
+
+    
 
     def plot(rewards):
         window_size = 100

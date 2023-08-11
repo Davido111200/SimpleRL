@@ -3,7 +3,7 @@ import numpy as np
 import torch
 import torch.nn as nn
 
-device = torch.device("cpu")
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
 class short_env(object):
