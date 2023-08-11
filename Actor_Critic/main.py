@@ -10,7 +10,8 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 
-device = torch.device('cpu')
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+print(device)
 
 class Actor(nn.Module):
     def __init__(self, n_inputs, n_hiddens, n_outputs) -> None:
