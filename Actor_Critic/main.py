@@ -35,36 +35,30 @@ class Critic(nn.Module):
         x = F.relu(self.fc1(x))
         return self.fc2(x)
     
-def main(n_epochs):
+def main(n_epochs, max_ts):
     env = environment().env
 
     ### PARAMS
     GAMMA = 0.9
-    lamb_thet = 0.7
-    lamb_w = 0.7
     alph_thet = 0.3
     alph_w = 0.3
     
-    total_rewards = []
-    total_td_error = []
-
     torch.autograd.set_detect_anomaly(True)
 
     actor = Actor(env.observation_space.shape[0], 128, env.action_space.n)
     critic = Critic(env.observation_space.shape[0], 128)
 
+    actor_optimizer = optim.AdamW(actor.parameters())
+    critic_optimizer = optim.AdamW(critic.parameters())
+
     for epoch in range(n_epochs):
-        if epoch > 0:
-            # print("Epoch: {} - total reward: {}".format(epoch, total_rewards[-1]))
-            print("Epoch: {} - total reward: {}".format(epoch, total_td_error[-1].item()))
         state, _ = env.reset()
         terminated = False
-        z_thet = [torch.zeros_like(param, dtype=torch.float32) for param in actor.parameters()]
-        z_w = [torch.zeros_like(param, dtype=torch.float32) for param in critic.parameters()]
-        I = 1
+
         reward_epoch = 0
-        td_error_epoch = 0
-        while not terminated:
+        I = 1
+
+        for ts in range(max_ts):
             state = torch.as_tensor(state, dtype=torch.float32, device=device)
             action, action_probs = actor(state)
             next_state, reward, terminated, truncated, _ = env.step(action.item())
@@ -73,75 +67,40 @@ def main(n_epochs):
             reward_epoch += reward
 
             next_state = torch.as_tensor(next_state, dtype=torch.float32, device=device)
-            target = reward + critic(next_state)
-            estimated_state_val = critic(state)
+            next_state_val =  critic(next_state)
+            current_state_val = critic(state)
 
-            # td error
-            td_error = target.detach() - estimated_state_val
-            td_error_epoch += td_error
+            # calculate value function loss with MSE
+            val_loss = F.mse_loss(reward + GAMMA * next_state_val, current_state_val) * alph_w
 
+            # calculate policy loss
+            advantage = reward + GAMMA  * next_state_val.item() - current_state_val.item()
+            policy_loss = - torch.log(action_probs)[action] * advantage * alph_thet
+            policy_loss *= I
 
-            ## trace w - update
-            loss_w = (target.detach() - estimated_state_val)
-            critic.zero_grad()
-            loss_w.backward()
+            # backprop for policy
+            actor_optimizer.zero_grad()
+            policy_loss.backward(retain_graph=True)
+            actor_optimizer.step()
 
-            # calculate and save the gradients
-            gradients_w = []
-            for param in critic.parameters():
-                gradients_w.append(param.grad.data.clone())
+            # backprop for value function
+            critic_optimizer.zero_grad()
+            val_loss.backward()
+            critic_optimizer.step()
 
-            # updating z_w
-            z_w = [GAMMA * alph_w * i for i in z_w]
-            z_w += gradients_w
+            if terminated:
+                break
 
-            # updating w
-            z_w_updates = [alph_w * td_error.item() * i for i in z_w]
-            assert len(z_w_updates) == len(z_w)
-            w_new_params = list(critic.parameters()) + z_w_updates
-            with torch.no_grad():
-                for idx, p in enumerate(critic.parameters()):
-                    p.copy_(w_new_params[idx])
-            
-            
-            ## trace theta - update
-            log_action_probs = torch.log(action_probs[action])
-            
-            loss_thet = - (reward * log_action_probs) 
-
-            actor.zero_grad()
-            loss_thet.backward()
-
-            # calculate and save the gradients
-            gradients_thet = []
-            for param in actor.parameters():
-                gradients_thet.append(param.grad.data.clone())
-
-            # updating z_thet 
-            z_thet = [GAMMA * alph_thet * i for i in z_thet]
-            z_thet += [I * i for i in gradients_thet]
-
-            # updating theta
-            z_thet_updates =  [alph_thet * td_error.item() * i for i in z_thet]
-            assert len(z_thet_updates) == len(z_thet)
-            thet_new_params = list(actor.parameters()) + z_thet_updates
-            with torch.no_grad():
-                for idx, p in enumerate(actor.parameters()):
-                    p.copy_(thet_new_params[idx]) 
-                       
             I *= GAMMA
-            state = next_state  
+            state = next_state
 
-        total_rewards.append(reward_epoch)
-        total_td_error.append(td_error_epoch)
-
-
-
+        if epoch % 1000 == 0:
+            print("eps total_reward", reward_epoch)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
 
-    parser.add_argument('--n_epochs', type=int, default=100)
-
+    parser.add_argument('--n_epochs', type=int, default=1000)
+    parser.add_argument('--max_steps', type=int, default=10000)
     args = parser.parse_args()
-    main(args.n_epochs)
+    main(args.n_epochs, args.max_steps)
