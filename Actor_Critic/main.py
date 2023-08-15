@@ -40,8 +40,8 @@ def main(n_epochs, max_ts):
 
     ### PARAMS
     GAMMA = 0.9
-    alph_thet = 0.3
-    alph_w = 0.3
+    alph_thet = 0.7
+    alph_w = 0.7
     
     torch.autograd.set_detect_anomaly(True)
 
@@ -67,7 +67,7 @@ def main(n_epochs, max_ts):
             reward_epoch += reward
 
             next_state = torch.as_tensor(next_state, dtype=torch.float32, device=device)
-            next_state_val =  critic(next_state)
+            next_state_val = critic(next_state) if not terminated else 0
             current_state_val = critic(state)
 
             # calculate value function loss with MSE
@@ -94,8 +94,8 @@ def main(n_epochs, max_ts):
             I *= GAMMA
             state = next_state
 
-        if epoch % 1000 == 0:
-            print("eps total_reward", reward_epoch)
+        if epoch % 10 == 0:
+            print("eps {}: {}".format(epoch, reward_epoch))
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
