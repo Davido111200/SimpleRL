@@ -71,10 +71,11 @@ def main(n_epochs, max_ts):
             current_state_val = critic(state)
 
             # calculate value function loss with MSE
-            val_loss = F.mse_loss(reward + GAMMA * next_state_val, current_state_val) * alph_w
+            val_loss = F.mse_loss(torch.tensor(reward+ GAMMA * next_state_val, device=device), current_state_val) 
+            val_loss *= alph_w
 
             # calculate policy loss
-            advantage = reward + GAMMA  * next_state_val.item() - current_state_val.item()
+            advantage = reward + GAMMA  * next_state_val - current_state_val.item()
             policy_loss = - torch.log(action_probs)[action] * advantage * alph_thet
             policy_loss *= I
 
