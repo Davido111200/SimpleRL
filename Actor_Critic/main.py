@@ -35,7 +35,7 @@ class Critic(nn.Module):
         x = F.relu(self.fc1(x))
         return self.fc2(x)
     
-def main(n_epochs, max_ts):
+def main(n_epochs, max_ts, n_trials):
     env = environment().env
 
     ### PARAMS
@@ -51,57 +51,67 @@ def main(n_epochs, max_ts):
     actor_optimizer = optim.AdamW(actor.parameters())
     critic_optimizer = optim.AdamW(critic.parameters())
 
-    for epoch in range(n_epochs):
-        state, _ = env.reset()
-        terminated = False
+    trial_reward = []
+    for trial in range(n_trials):
+        trial_rew = []
+        for epoch in range(n_epochs):
+            state, _ = env.reset()
+            terminated = False
 
-        reward_epoch = 0
-        I = 1
+            reward_epoch = 0
+            I = 1
 
-        for ts in range(max_ts):
-            state = torch.as_tensor(state, dtype=torch.float32, device=device)
-            action, action_probs = actor(state)
-            next_state, reward, terminated, truncated, _ = env.step(action.item())
+            for ts in range(max_ts):
+                state = torch.as_tensor(state, dtype=torch.float32, device=device)
+                action, action_probs = actor(state)
+                next_state, reward, terminated, truncated, _ = env.step(action.item())
 
-            # save reward for measuring performance
-            reward_epoch += reward
+                # save reward for measuring performance
+                reward_epoch += reward
 
-            next_state = torch.as_tensor(next_state, dtype=torch.float32, device=device)
-            next_state_val = critic(next_state) if not terminated else 0
-            current_state_val = critic(state)
+                next_state = torch.as_tensor(next_state, dtype=torch.float32, device=device)
+                next_state_val = critic(next_state) if not terminated else 0
+                current_state_val = critic(state)
 
-            # calculate value function loss with MSE
-            val_loss = F.mse_loss(torch.tensor(reward+ GAMMA * next_state_val, device=device), current_state_val) 
-            val_loss *= alph_w
+                # calculate value function loss with MSE
+                val_loss = F.mse_loss(torch.tensor(reward+ GAMMA * next_state_val, device=device), current_state_val) 
+                val_loss *= alph_w
 
-            # calculate policy loss
-            advantage = reward + GAMMA  * next_state_val - current_state_val.item()
-            policy_loss = - torch.log(action_probs)[action] * advantage * alph_thet
-            policy_loss *= I
+                # calculate policy loss
+                advantage = reward + GAMMA  * next_state_val - current_state_val.item()
+                policy_loss = - torch.log(action_probs)[action] * advantage * alph_thet
+                policy_loss *= I
 
-            # backprop for policy
-            actor_optimizer.zero_grad()
-            policy_loss.backward(retain_graph=True)
-            actor_optimizer.step()
+                # backprop for policy
+                actor_optimizer.zero_grad()
+                policy_loss.backward(retain_graph=True)
+                actor_optimizer.step()
 
-            # backprop for value function
-            critic_optimizer.zero_grad()
-            val_loss.backward()
-            critic_optimizer.step()
+                # backprop for value function
+                critic_optimizer.zero_grad()
+                val_loss.backward()
+                critic_optimizer.step()
 
-            if terminated:
-                break
+                if terminated:
+                    break
 
-            I *= GAMMA
-            state = next_state
+                I *= GAMMA
+                state = next_state
 
-        if epoch % 10 == 0:
-            print("eps {}: {}".format(epoch, reward_epoch))
+            if epoch % 100 == 0:
+                # print("eps {}: {}".format(epoch, reward_epoch))
+                trial_rew.append(reward_epoch)
+        trial_reward.append(trial_rew)
+
+    a = list(np.mean(np.array(trial_reward), axis=0))
+    for idx, element in enumerate(a):
+        print("Epoch: {} - averaged reward over 5 trials: {}".format(idx*100, element))
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
 
-    parser.add_argument('--n_epochs', type=int, default=1000)
-    parser.add_argument('--max_steps', type=int, default=10000)
+    parser.add_argument('--n_epochs', type=int)
+    parser.add_argument('--max_steps', type=int)
+    parser.add_argument('--n_trials', type=int)
     args = parser.parse_args()
-    main(args.n_epochs, args.max_steps)
+    main(args.n_epochs, args.max_steps, args.n_trials)
