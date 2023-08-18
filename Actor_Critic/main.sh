@@ -8,7 +8,7 @@
 
 cd ~/dai/SimpleRL/Actor_Critic
 
-max_ts=3000
+max_ts=10000
 n_epochs=10000
 n_trials=5
 

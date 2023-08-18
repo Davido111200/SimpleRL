@@ -40,8 +40,8 @@ def main(n_epochs, max_ts, n_trials):
 
     ### PARAMS
     GAMMA = 0.9
-    alph_thet = 0.7
-    alph_w = 0.7
+    alph_thet = 0.8
+    alph_w = 0.8
     
     torch.autograd.set_detect_anomaly(True)
 
@@ -91,7 +91,6 @@ def main(n_epochs, max_ts, n_trials):
                 critic_optimizer.zero_grad()
                 val_loss.backward()
                 critic_optimizer.step()
-
                 if terminated:
                     break
 

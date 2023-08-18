@@ -1,101 +1,101 @@
 cuda
-eps 0: 58.0
-eps 100: 89.0
-eps 200: 34.0
-eps 300: 179.0
-eps 400: 8.0
-eps 500: 36.0
-eps 600: 162.0
-eps 700: 9.0
-eps 800: 8.0
-eps 900: 9.0
-eps 1000: 9.0
-eps 1100: 9.0
-eps 1200: 9.0
-eps 1300: 91.0
-eps 1400: 123.0
-eps 1500: 15.0
-eps 1600: 24.0
-eps 1700: 28.0
-eps 1800: 15.0
-eps 1900: 28.0
-eps 2000: 224.0
-eps 2100: 96.0
-eps 2200: 41.0
-eps 2300: 119.0
-eps 2400: 261.0
-eps 2500: 156.0
-eps 2600: 41.0
-eps 2700: 199.0
-eps 2800: 27.0
-eps 2900: 228.0
-eps 3000: 13.0
-eps 3100: 10.0
-eps 3200: 12.0
-eps 3300: 35.0
-eps 3400: 154.0
-eps 3500: 125.0
-eps 3600: 10.0
-eps 3700: 147.0
-eps 3800: 123.0
-eps 3900: 1971.0
-eps 4000: 10.0
-eps 4100: 12.0
-eps 4200: 144.0
-eps 4300: 10.0
-eps 4400: 9.0
-eps 4500: 8.0
-eps 4600: 37.0
-eps 4700: 94.0
-eps 4800: 10.0
-eps 4900: 46.0
-eps 5000: 187.0
-eps 5100: 20.0
-eps 5200: 143.0
-eps 5300: 9.0
-eps 5400: 50.0
-eps 5500: 21.0
-eps 5600: 113.0
-eps 5700: 29.0
-eps 5800: 121.0
-eps 5900: 9.0
-eps 6000: 201.0
-eps 6100: 16.0
-eps 6200: 168.0
-eps 6300: 94.0
-eps 6400: 10.0
-eps 6500: 122.0
-eps 6600: 21.0
-eps 6700: 111.0
-eps 6800: 108.0
-eps 6900: 62.0
-eps 7000: 76.0
-eps 7100: 111.0
-eps 7200: 106.0
-eps 7300: 113.0
-eps 7400: 51.0
-eps 7500: 37.0
-eps 7600: 81.0
-eps 7700: 10.0
-eps 7800: 9.0
-eps 7900: 11.0
-eps 8000: 108.0
-eps 8100: 20.0
-eps 8200: 9.0
-eps 8300: 20.0
-eps 8400: 147.0
-eps 8500: 10.0
-eps 8600: 10.0
-eps 8700: 10.0
-eps 8800: 9.0
-eps 8900: 12.0
-eps 9000: 12.0
-eps 9100: 44.0
-eps 9200: 98.0
-eps 9300: 110.0
-eps 9400: 192.0
-eps 9500: 225.0
-eps 9600: 10.0
-eps 9700: 25.0
-eps 9800: 22.0
-eps 9900: 327.0
+Epoch: 0 - averaged reward over 5 trials: 83.6
+Epoch: 100 - averaged reward over 5 trials: 95.2
+Epoch: 200 - averaged reward over 5 trials: 117.4
+Epoch: 300 - averaged reward over 5 trials: 55.0
+Epoch: 400 - averaged reward over 5 trials: 222.6
+Epoch: 500 - averaged reward over 5 trials: 102.4
+Epoch: 600 - averaged reward over 5 trials: 106.0
+Epoch: 700 - averaged reward over 5 trials: 105.0
+Epoch: 800 - averaged reward over 5 trials: 169.0
+Epoch: 900 - averaged reward over 5 trials: 99.0
+Epoch: 1000 - averaged reward over 5 trials: 70.4
+Epoch: 1100 - averaged reward over 5 trials: 33.6
+Epoch: 1200 - averaged reward over 5 trials: 26.4
+Epoch: 1300 - averaged reward over 5 trials: 67.6
+Epoch: 1400 - averaged reward over 5 trials: 18.0
+Epoch: 1500 - averaged reward over 5 trials: 37.6
+Epoch: 1600 - averaged reward over 5 trials: 66.2
+Epoch: 1700 - averaged reward over 5 trials: 89.6
+Epoch: 1800 - averaged reward over 5 trials: 646.8
+Epoch: 1900 - averaged reward over 5 trials: 55.6
+Epoch: 2000 - averaged reward over 5 trials: 71.0
+Epoch: 2100 - averaged reward over 5 trials: 72.2
+Epoch: 2200 - averaged reward over 5 trials: 105.6
+Epoch: 2300 - averaged reward over 5 trials: 205.2
+Epoch: 2400 - averaged reward over 5 trials: 90.6
+Epoch: 2500 - averaged reward over 5 trials: 78.8
+Epoch: 2600 - averaged reward over 5 trials: 149.6
+Epoch: 2700 - averaged reward over 5 trials: 67.6
+Epoch: 2800 - averaged reward over 5 trials: 661.8
+Epoch: 2900 - averaged reward over 5 trials: 120.8
+Epoch: 3000 - averaged reward over 5 trials: 155.0
+Epoch: 3100 - averaged reward over 5 trials: 235.2
+Epoch: 3200 - averaged reward over 5 trials: 82.6
+Epoch: 3300 - averaged reward over 5 trials: 157.0
+Epoch: 3400 - averaged reward over 5 trials: 67.4
+Epoch: 3500 - averaged reward over 5 trials: 125.2
+Epoch: 3600 - averaged reward over 5 trials: 183.6
+Epoch: 3700 - averaged reward over 5 trials: 68.0
+Epoch: 3800 - averaged reward over 5 trials: 41.8
+Epoch: 3900 - averaged reward over 5 trials: 60.4
+Epoch: 4000 - averaged reward over 5 trials: 52.0
+Epoch: 4100 - averaged reward over 5 trials: 94.0
+Epoch: 4200 - averaged reward over 5 trials: 108.0
+Epoch: 4300 - averaged reward over 5 trials: 164.0
+Epoch: 4400 - averaged reward over 5 trials: 54.2
+Epoch: 4500 - averaged reward over 5 trials: 42.6
+Epoch: 4600 - averaged reward over 5 trials: 15.0
+Epoch: 4700 - averaged reward over 5 trials: 24.2
+Epoch: 4800 - averaged reward over 5 trials: 52.6
+Epoch: 4900 - averaged reward over 5 trials: 81.4
+Epoch: 5000 - averaged reward over 5 trials: 34.6
+Epoch: 5100 - averaged reward over 5 trials: 55.4
+Epoch: 5200 - averaged reward over 5 trials: 51.8
+Epoch: 5300 - averaged reward over 5 trials: 671.2
+Epoch: 5400 - averaged reward over 5 trials: 51.6
+Epoch: 5500 - averaged reward over 5 trials: 58.2
+Epoch: 5600 - averaged reward over 5 trials: 76.4
+Epoch: 5700 - averaged reward over 5 trials: 200.4
+Epoch: 5800 - averaged reward over 5 trials: 666.8
+Epoch: 5900 - averaged reward over 5 trials: 157.4
+Epoch: 6000 - averaged reward over 5 trials: 50.2
+Epoch: 6100 - averaged reward over 5 trials: 55.6
+Epoch: 6200 - averaged reward over 5 trials: 60.6
+Epoch: 6300 - averaged reward over 5 trials: 78.2
+Epoch: 6400 - averaged reward over 5 trials: 37.8
+Epoch: 6500 - averaged reward over 5 trials: 67.4
+Epoch: 6600 - averaged reward over 5 trials: 104.2
+Epoch: 6700 - averaged reward over 5 trials: 40.6
+Epoch: 6800 - averaged reward over 5 trials: 57.2
+Epoch: 6900 - averaged reward over 5 trials: 65.2
+Epoch: 7000 - averaged reward over 5 trials: 95.8
+Epoch: 7100 - averaged reward over 5 trials: 62.0
+Epoch: 7200 - averaged reward over 5 trials: 30.6
+Epoch: 7300 - averaged reward over 5 trials: 88.6
+Epoch: 7400 - averaged reward over 5 trials: 116.8
+Epoch: 7500 - averaged reward over 5 trials: 72.0
+Epoch: 7600 - averaged reward over 5 trials: 84.8
+Epoch: 7700 - averaged reward over 5 trials: 631.8
+Epoch: 7800 - averaged reward over 5 trials: 408.6
+Epoch: 7900 - averaged reward over 5 trials: 189.6
+Epoch: 8000 - averaged reward over 5 trials: 633.0
+Epoch: 8100 - averaged reward over 5 trials: 120.2
+Epoch: 8200 - averaged reward over 5 trials: 88.0
+Epoch: 8300 - averaged reward over 5 trials: 147.6
+Epoch: 8400 - averaged reward over 5 trials: 89.2
+Epoch: 8500 - averaged reward over 5 trials: 30.4
+Epoch: 8600 - averaged reward over 5 trials: 48.2
+Epoch: 8700 - averaged reward over 5 trials: 259.4
+Epoch: 8800 - averaged reward over 5 trials: 93.4
+Epoch: 8900 - averaged reward over 5 trials: 73.2
+Epoch: 9000 - averaged reward over 5 trials: 157.6
+Epoch: 9100 - averaged reward over 5 trials: 65.6
+Epoch: 9200 - averaged reward over 5 trials: 699.0
+Epoch: 9300 - averaged reward over 5 trials: 50.6
+Epoch: 9400 - averaged reward over 5 trials: 82.0
+Epoch: 9500 - averaged reward over 5 trials: 92.0
+Epoch: 9600 - averaged reward over 5 trials: 218.2
+Epoch: 9700 - averaged reward over 5 trials: 120.0
+Epoch: 9800 - averaged reward over 5 trials: 211.4
+Epoch: 9900 - averaged reward over 5 trials: 192.0
