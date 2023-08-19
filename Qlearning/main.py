@@ -38,8 +38,6 @@ def main(n_epochs):
         else:
             return np.argmax(q_table[state])
 
-
-    # SARSA first
     rews = []
 
     for epoch in range(n_epochs):
