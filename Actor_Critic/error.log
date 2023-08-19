@@ -1,0 +1,4 @@
+main.py:77: UserWarning: To copy construct from a tensor, it is recommended to use sourceTensor.clone().detach() or sourceTensor.clone().detach().requires_grad_(True), rather than torch.tensor(sourceTensor).
+  val_loss = F.mse_loss(torch.tensor(reward+ GAMMA * next_state_val, device=device), current_state_val)
+main.py:77: UserWarning: Using a target size (torch.Size([1])) that is different to the input size (torch.Size([])). This will likely lead to incorrect results due to broadcasting. Please ensure they have the same size.
+  val_loss = F.mse_loss(torch.tensor(reward+ GAMMA * next_state_val, device=device), current_state_val)
