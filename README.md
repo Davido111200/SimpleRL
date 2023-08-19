@@ -7,3 +7,6 @@ Current algorithms:
   - Offline Lambda-return (grid world)
   - REINFORCE ( short corridor)
   - Actor Critic (Cartpole-v1)
+  - Q-learning (Taxi-v3, FrozenLake-v1)
+  - N-step SARSA (FrozenLake-v1)
+  - SARSA (FrozenLake-v1)
