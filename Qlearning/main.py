@@ -21,7 +21,7 @@ def plot(rew_list):
     plt.show()
 
 def main(n_epochs):
-    env = gym.make('FrozenLake-v1', map_name="4x4", render_mode='rgb_array')
+    env = gym.make('Taxi-v3', render_mode='rgb_array')
     qtable = np.zeros((env.observation_space.n, env.action_space.n))
 
     # HYPERS
@@ -44,7 +44,7 @@ def main(n_epochs):
         state, _ = env.reset()
 
         terminated = False
-        n_success = 0
+        epoch_reward = 0
         
         while not terminated:
             action = epsilon_greedy(state, qtable)
@@ -57,11 +57,10 @@ def main(n_epochs):
             qtable[state, action] = qtable[state, action] + \
                                 ALPHA * (target_action_value - qtable[state, action])
 
-            if reward:
-                n_success += 1
+            epoch_reward += reward
 
             state = next_state
-        rews.append(n_success)
+        rews.append(epoch_reward)
 
     print(rews)
     print('q_table after', qtable)
