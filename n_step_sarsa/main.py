@@ -23,9 +23,9 @@ def plot(rew_list):
     plt.bar(range(len(rew_list)), rew_list, color="#0A047A", width=1.0)
     plt.show()
 
-def save_output(path, list_rewards):
-    with open("SimpleRL/n_step_sarsa/output.txt", 'w') as f: 
-        for key, value in list_rewards.items(): 
+def save_output(path, rewards):
+    with open("/home/s223540177/dai/SimpleRL/n_step_sarsa/output.txt", 'w') as f: 
+        for key, value in rewards.items(): 
             f.write('%s:%s\n' % (key, value))
 
 def main(n_epochs, max_ts, n):
@@ -59,7 +59,7 @@ def main(n_epochs, max_ts, n):
         print("q-table: before", qtable)
 
         rews = []
-        
+
         for epoch in range(n_epochs):
             state, _ = env.reset()
             
@@ -69,6 +69,7 @@ def main(n_epochs, max_ts, n):
 
             terminated = False
             T = max_ts
+            epoch_reward = 0
 
             for t in range(T): 
                 if t < T:
@@ -104,12 +105,12 @@ def main(n_epochs, max_ts, n):
                 
                 # terminnation ?
                 if tau == T - 1:
-                    print("epoch", epoch)
                     break
             rews.append(epoch_reward)
 
         print("q-table: after", qtable)
         rews_n[n] = rews
+    save_output('SimpleRL/n_step_sarsa/output.txt', rews_n)
 
                 
 
