@@ -11,6 +11,8 @@ import gymnasium as gym
 import matplotlib.pyplot as plt
 import matplotlib
 import sys
+import json
+
 
 def plot(rew_list):
     plt.figure(figsize=(12, 5))
@@ -21,22 +23,18 @@ def plot(rew_list):
     plt.bar(range(len(rew_list)), rew_list, color="#0A047A", width=1.0)
     plt.show()
 
-def save_output(path, *args):
-    f = open(path, "wb")
-    for l in args:
-        f.write(l+"\n")
-    f.close()
+def save_output(path, list_rewards):
+    with open("SimpleRL/n_step_sarsa/output.txt", 'w') as f: 
+        for key, value in list_rewards.items(): 
+            f.write('%s:%s\n' % (key, value))
 
 def main(n_epochs, max_ts, n):
     env = gym.make('FrozenLake-v1', map_name="4x4", render_mode='rgb_array')
-    qtable = np.zeros((env.observation_space.n, env.action_space.n))
 
     # HYPERS
     eps=0.1
     GAMMA=0.9
     ALPHA = 0.1
-
-    print("q-table: before", qtable)
 
     def epsilon_greedy(state, q_table):
         temp = random.random()
@@ -55,7 +53,13 @@ def main(n_epochs, max_ts, n):
         list_n.append(i**2)
 
     for n in list_n:
+        qtable = np.zeros((env.observation_space.n, env.action_space.n))
+        
+        print('working on {}'.format(n))
+        print("q-table: before", qtable)
+
         rews = []
+        
         for epoch in range(n_epochs):
             state, _ = env.reset()
             
@@ -104,7 +108,6 @@ def main(n_epochs, max_ts, n):
                     break
             rews.append(epoch_reward)
 
-        print('n', n)
         print("q-table: after", qtable)
         rews_n[n] = rews
 
