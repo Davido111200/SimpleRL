@@ -1,0 +1,6 @@
+Traceback (most recent call last):
+  File "main.py", line 10, in <module>
+    import matplotlib
+  File "/home/s223540177/.local/lib/python3.8/site-packages/matplotlib/__init__.py", line 125, in <module>
+    from packaging.version import parse as parse_version
+ModuleNotFoundError: No module named 'packaging'
