@@ -8,6 +8,7 @@
 
 cd ~/dai/SimpleRL/Qlearning
 
-n_epochs=1000
+n_epochs=10000
+n_trials=50
 
-python3 main.py --n_epochs "$n_epochs" 
+python3 main.py --n_epochs "$n_epochs" --n_trials "$n_trials"
