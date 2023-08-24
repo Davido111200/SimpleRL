@@ -10,6 +10,7 @@ import argparse
 import gymnasium as gym
 import matplotlib.pyplot as plt
 import matplotlib
+import shutil
 
 def plot(rew_list):
     plt.figure(figsize=(12, 5))
@@ -28,6 +29,7 @@ def main(n_epochs, n_trials):
     eps=0.1
     GAMMA=0.9
     ALPHA = 0.1
+    init_rewards = -99999999
 
     def epsilon_greedy(state, q_table):
         temp = random.random()
@@ -61,39 +63,47 @@ def main(n_epochs, n_trials):
                 epoch_reward += reward
 
                 state = next_state
-            rews.append(epoch_reward)
+            rews.append(np.mean(epoch_reward))
+            
+            # save the best qtable
+            is_best = (np.mean(epoch_reward) > init_rewards)
+            init_rewards = max(np.mean(epoch_reward), init_rewards)
+            if is_best:
+                eval_qtable = qtable
+                print('Epoch', epoch, 'qtable saved')
 
         trial_results.append(rews)
-        print(f"Trial {trial} results: {trial_results}")
 
-        episodes = 100
+    # Evaluation
+
+    print('Start evaluation')
+    for _ in range(100):
+        state, _ = env.reset()
+        done = False
         nb_success = 0
 
-        # Evaluation
-        for _ in range(100):
-            state, _ = env.reset()
-            done = False
-            
-            # Until the agent gets stuck or reaches the goal, keep training it
-            while not done:
-                # Choose the action with the highest value in the current state
-                if np.max(qtable[state, :]) > 0:
-                    action = np.argmax(qtable[state, :])
+        
+        # Until the agent gets stuck or reaches the goal, keep training it
+        while not done:
+            # Choose the action with the highest value in the current state
+            if np.max(eval_qtable[state, :]) > 0:
+                action = np.argmax(eval_qtable[state, :])
 
-                # If there's no best action (only zeros), take a random one
-                else:
-                    action = env.action_space.sample()
-                    
-                # Implement this action and move the agent in the desired direction
-                new_state, reward, done, t, info = env.step(action)
+            # If there's no best action (only zeros), take a random one
+            else:
+                action = env.action_space.sample()
+                
+            # Implement this action and move the agent in the desired direction
+            new_state, reward, done, t, info = env.step(action)
 
-                # Update our current state
-                state = new_state
+            # Update our current state
+            state = new_state
 
-                # When we get a reward, it means we solved the game
-                nb_success += reward
+            # When we get a reward, it means we solved the game
+            nb_success += 1 if reward > 0 else 0
 
-        # Let's check our success rate!    
+        # Let's check our success rate!
+        print(f"Success rate: {nb_success / 100}%")    
     print('Mean reward', np.mean(trial_results))
 
     

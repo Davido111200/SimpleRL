@@ -2,7 +2,7 @@
 #
 #SBATCH -J interact
 #SBATCH -o output.log
-#SBATCH -e error.log          
+#SBATCH -e error.logfr          
 #SBATCH -n 1
 #SBATCH --gres=gpu:2
 
