@@ -75,7 +75,6 @@ def main(n_epochs, n_trials):
         trial_results.append(rews)
 
     # Evaluation
-
     print('Start evaluation')
     for _ in range(100):
         state, _ = env.reset()
