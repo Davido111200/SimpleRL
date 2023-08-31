@@ -26,21 +26,47 @@ class policy(nn.Module):
         x = self.fc2(x)
         return F.softmax(x, dim=-1)
     
-def plot_scores(scores, filename):
-    fig = plt.figure()
-    plt.plot(np.arange(1, len(scores)+1), scores)
-    plt.ylabel('Score')
-    plt.xlabel('Episode #')
-    plt.show()
-    plt.grid(True)
+def plot_reward_trials_with_variance(trial_scores, filename, blurred_variance_factor=0.3):
+    """
+    Plots multiple reward trials with an average line and blurred variance.
+
+    Args:
+        trial_scores (list of arrays): List containing arrays of trial scores for each trial.
+        blurred_variance_factor (float): Factor controlling the amount of blurring for variance.
+
+    Returns:
+        None
+    """
+    num_trials = len(trial_scores)
+
+    # Calculate the average and variance
+    average_scores = np.mean(trial_scores, axis=0)
+    blurred_variance = np.std(trial_scores, axis=0) * blurred_variance_factor
+
+    # Plot the average line
+    plt.plot(average_scores, label='Average', color='blue')
+
+    # Plot the blurred variance area
+    plt.fill_between(range(len(average_scores)), average_scores - blurred_variance, average_scores + blurred_variance, alpha=0.3, color='blue')
+
+    # Plot individual trial scores
+    for i in range(num_trials):
+        plt.plot(trial_scores[i], color='gray', alpha=0.3)
+
+    plt.xlabel('Time')
+    plt.ylabel('Reward')
+    plt.title('Reward Trials with Average and Blurred Variance')
     plt.savefig(filename)
+    plt.legend()
     plt.show()
+
 
 def main(n_epochs, max_ts, n_trials):
     pi = policy(env.observation_space.shape[0], env.action_space.n)
     optimizer = optim.Adam(pi.parameters(), lr=0.01)
     gamma = 0.99
 
+    trial_scores = []
 
     for trial in range(n_trials):
         scores = []
@@ -94,6 +120,7 @@ def main(n_epochs, max_ts, n_trials):
 
 
             running_reward = running_reward * 0.99 + ts * 0.01
+            scores.append(running_reward)
 
             if epoch % 100 == 0:
                 print('Episode {}\tLast length: {:5d}\tAverage length: {:.2f}'.format(
@@ -101,15 +128,15 @@ def main(n_epochs, max_ts, n_trials):
             if running_reward > env.spec.reward_threshold:
                 print("Solved! Running reward is now {} and "
                     "the last episode runs to {} time steps!".format(running_reward, ts))
-                break
+        trial_scores.append(scores)
         
-        plot_scores(scores, filename="/home/s223540177/dai/SimpleRL/REINFORCE/figs/trial_{}.png".format(trial))
+    plot_reward_trials_with_variance(trial_scores, filename="/home/s223540177/dai/SimpleRL/REINFORCE/figs/training_plot.png", blurred_variance_factor=0.3)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--n_epochs", type=int, default=10000)
+    parser.add_argument("--n_epochs", type=int, default=1000)
     parser.add_argument("--max_ts", type=int, default=1000)
-    parser.add_argument("--n_trials", type=int, default=2)
+    parser.add_argument("--n_trials", type=int, default=5)
     args = parser.parse_args()
     main(args.n_epochs, args.max_ts, args.n_trials)
     
