@@ -1,0 +1,35 @@
+
+Episode 0	Last length:    24	Average length: 10.14
+Episode 100	Last length:     8	Average length: 12.06
+Episode 200	Last length:   100	Average length: 36.23
+Episode 300	Last length:    44	Average length: 81.99
+Episode 400	Last length:    87	Average length: 75.39
+Episode 500	Last length:     8	Average length: 131.22
+Episode 600	Last length:     9	Average length: 53.29
+Episode 700	Last length:     7	Average length: 24.73
+Episode 800	Last length:     9	Average length: 14.34
+Episode 900	Last length:     9	Average length: 10.53
+Episode 0	Last length:    16	Average length: 10.06
+Episode 100	Last length:    37	Average length: 13.93
+Episode 200	Last length:    41	Average length: 28.14
+Episode 300	Last length:     9	Average length: 73.08
+Episode 400	Last length:     9	Average length: 32.73
+Episode 500	Last length:    89	Average length: 24.34
+Traceback (most recent call last):
+  File "main.py", line 169, in <module>
+  File "main.py", line 135, in main
+    loss_actor.backward()
+  File "/home/s223540177/.local/lib/python3.8/site-packages/torch/_tensor.py", line 487, in backward
+    torch.autograd.backward(
+  File "/home/s223540177/.local/lib/python3.8/site-packages/torch/autograd/__init__.py", line 200, in backward
+    Variable._execution_engine.run_backward(  # Calls into the C++ engine to run the backward pass
+KeyboardInterrupt
+Traceback (most recent call last):
+  File "main.py", line 169, in <module>
+  File "main.py", line 135, in main
+    loss_actor.backward()
+  File "/home/s223540177/.local/lib/python3.8/site-packages/torch/_tensor.py", line 487, in backward
+    torch.autograd.backward(
+  File "/home/s223540177/.local/lib/python3.8/site-packages/torch/autograd/__init__.py", line 200, in backward
+    Variable._execution_engine.run_backward(  # Calls into the C++ engine to run the backward pass
+KeyboardInterrupt
