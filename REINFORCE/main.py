@@ -10,7 +10,6 @@ import argparse
 import matplotlib.pyplot as plt
 from collections import deque
 
-
 env = gym.make("CartPole-v1")
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -26,6 +25,16 @@ class policy(nn.Module):
         x = self.fc2(x)
         return F.softmax(x, dim=-1)
     
+def plot_test_scores(test_scores, filename):
+    "Plot test scores"
+    plt.clf()
+    plt.plot(test_scores)
+    plt.xlabel('Epoch')
+    plt.ylabel('Reward')
+    plt.title('Test Scores')
+    plt.savefig(filename)
+    plt.show()
+
 def plot_reward_trials_with_variance(trial_scores, filename, blurred_variance_factor=0.3):
     """
     Plots multiple reward trials with an average line and blurred variance.
@@ -53,15 +62,32 @@ def plot_reward_trials_with_variance(trial_scores, filename, blurred_variance_fa
     for i in range(num_trials):
         plt.plot(trial_scores[i], color='gray', alpha=0.3)
 
-    plt.xlabel('Time')
+    plt.xlabel('Epoch')
     plt.ylabel('Reward')
     plt.title('Reward Trials with Average and Blurred Variance')
     plt.savefig(filename)
     plt.legend()
     plt.show()
 
+def plot_training_rewards_by_time_step(rewards, filename):
+    """
+    Plots the reward for each time step in the training process.
 
-def main(n_epochs, max_ts, n_trials):
+    Args:
+        rewards (list of floats): List containing the reward for each time step in the training process.
+
+    Returns:
+        None
+    """
+    plt.clf()
+    plt.plot(rewards)
+    plt.xlabel('Time Step')
+    plt.ylabel('Reward')
+    plt.title('Reward by Time Step')
+    plt.savefig(filename)
+    plt.show()
+
+def main(n_epochs, max_ts, n_trials, test_epochs):
     pi = policy(env.observation_space.shape[0], env.action_space.n)
     optimizer = optim.Adam(pi.parameters(), lr=0.01)
     gamma = 0.99
@@ -86,7 +112,9 @@ def main(n_epochs, max_ts, n_trials):
                 action_dist = torch.distributions.Categorical(action_probs)
                 action = action_dist.sample()
 
-                next_state, reward, done, truncated, _ = env.step(action.item())
+                next_state, reward, terminated, truncated, _ = env.step(action.item())
+
+                done = terminated or truncated
                 
                 # this was the problem the whole time!!!!!!
                 log_prob = action_dist.log_prob(action)
@@ -108,7 +136,7 @@ def main(n_epochs, max_ts, n_trials):
                 R = r + gamma * R
                 returns.insert(0, R)
             returns = torch.tensor(returns)
-            # returns = (returns - returns.mean()) / (returns.std() + 1e-7)
+            returns = (returns - returns.mean()) / (returns.std() + 1e-7)
 
             for lp, Gt in zip(log_probs, returns):
                 policy_loss.append(-lp * Gt)
@@ -129,16 +157,46 @@ def main(n_epochs, max_ts, n_trials):
                 print("Solved! Running reward is now {} and "
                     "the last episode runs to {} time steps!".format(running_reward, ts))
         trial_scores.append(scores)
+        # save the weights of each trial
+        torch.save(pi.state_dict(), "/home/s223540177/dai/SimpleRL/REINFORCE/weights/weights_trial_{}.pth".format(trial))
         
     plot_reward_trials_with_variance(trial_scores, filename="/home/s223540177/dai/SimpleRL/REINFORCE/figs/training_plot.png", blurred_variance_factor=0.3)
+
+    # evaluate the agent with the mean of the weights
+    pi.load_state_dict(torch.load("/home/s223540177/dai/SimpleRL/REINFORCE/weights/weights_trial_{}.pth".format(np.argmax(np.array(trial_scores)[:, -1]))))
+
+    test_scores = []
+    for te in range(test_epochs):
+        state, _ = env.reset()
+        done = False
+        ts = 0
+        while not done:
+            state = torch.from_numpy(state).float().to(device)
+            action_probs = pi(state)
+            action_dist = torch.distributions.Categorical(action_probs)
+            action = action_dist.sample()
+
+            next_state, reward, terminated, truncated, _ = env.step(action.item())
+
+            done = terminated or truncated
+
+            state = next_state
+            ts += 1
+
+        test_scores.append(ts)
+        print("Test Epoch: {}\tTest Score: {}".format(te, ts))
+
+    # plot the reward trials
+    plot_test_scores(test_scores, filename="/home/s223540177/dai/SimpleRL/REINFORCE/figs/test_plot.png")
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--n_epochs", type=int, default=1000)
     parser.add_argument("--max_ts", type=int, default=1000)
     parser.add_argument("--n_trials", type=int, default=5)
+    parser.add_argument("--test_epochs", type=int, default=100)
     args = parser.parse_args()
-    main(args.n_epochs, args.max_ts, args.n_trials)
+    main(args.n_epochs, args.max_ts, args.n_trials, args.test_epochs)
     
     
 
