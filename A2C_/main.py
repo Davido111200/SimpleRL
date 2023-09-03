@@ -204,7 +204,6 @@ def main(n_epochs, max_ts, n_trials, test_epochs):
     # plot the reward trials
     plot_test_scores(test_scores, filename="/home/s223540177/dai/SimpleRL/A2C/figs/test_plot.png")
 
-
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Actor-Critic')
     parser.add_argument('--n_epochs', type=int, default=1000, help='number of epochs')
