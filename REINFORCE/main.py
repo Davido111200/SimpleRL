@@ -58,9 +58,11 @@ def plot_reward_trials_with_variance(trial_scores, filename, blurred_variance_fa
     # Plot the blurred variance area
     plt.fill_between(range(len(average_scores)), average_scores - blurred_variance, average_scores + blurred_variance, alpha=0.3, color='blue')
 
-    # Plot individual trial scores
-    for i in range(num_trials):
-        plt.plot(trial_scores[i], color='gray', alpha=0.3)
+    # Plot individual trial scores with different colors
+    
+    colors = ['red', 'green', 'orange', 'purple', 'brown']
+    for i, color in zip(range(num_trials), colors):
+        plt.plot(trial_scores[i], color=color, alpha=0.3)
 
     plt.xlabel('Epoch')
     plt.ylabel('Reward')
@@ -88,15 +90,14 @@ def plot_training_rewards_by_time_step(rewards, filename):
     plt.show()
 
 def main(n_epochs, max_ts, n_trials, test_epochs):
-    pi = policy(env.observation_space.shape[0], env.action_space.n)
-    optimizer = optim.Adam(pi.parameters(), lr=0.01)
     gamma = 0.99
 
     trial_scores = []
 
     for trial in range(n_trials):
+        pi = policy(env.observation_space.shape[0], env.action_space.n)
+        optimizer = optim.Adam(pi.parameters(), lr=0.01)
         scores = []
-        running_reward = 10
         for epoch in range(n_epochs):
             states = []
             actions = []
@@ -146,16 +147,14 @@ def main(n_epochs, max_ts, n_trials, test_epochs):
             policy_loss.backward()
             optimizer.step()
 
-
-            running_reward = running_reward * 0.99 + ts * 0.01
-            scores.append(running_reward)
+            scores.append(ts)
 
             if epoch % 100 == 0:
                 print('Episode {}\tLast length: {:5d}\tAverage length: {:.2f}'.format(
-                    epoch, ts, running_reward))
-            if running_reward > env.spec.reward_threshold:
+                    epoch, ts, r))
+            if r > env.spec.reward_threshold:
                 print("Solved! Running reward is now {} and "
-                    "the last episode runs to {} time steps!".format(running_reward, ts))
+                    "the last episode runs to {} time steps!".format(r, ts))
         trial_scores.append(scores)
         # save the weights of each trial
         torch.save(pi.state_dict(), "/home/s223540177/dai/SimpleRL/REINFORCE/weights/weights_trial_{}.pth".format(trial))
