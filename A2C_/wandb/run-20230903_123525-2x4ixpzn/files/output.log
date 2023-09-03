@@ -1,3 +1,4 @@
+
 Episode 0	Last length:    11	Average length: 10.01
 Episode 100	Last length:    12	Average length: 12.50
 Episode 200	Last length:    11	Average length: 10.95
@@ -48,3 +49,27 @@ Episode 4600	Last length:   103	Average length: 101.29
 Episode 4700	Last length:   129	Average length: 111.63
 Episode 4800	Last length:   499	Average length: 216.99
 Episode 4900	Last length:   499	Average length: 375.39
+Traceback (most recent call last):
+  File "main.py", line 215, in <module>
+    main(args.n_epochs, args.max_ts, args.n_trials, args.test_epochs)
+  File "main.py", line 171, in main
+    torch.save(actor.state_dict(), "/home/s223540177/dai/SimpleRL/A2C/weights/actor_trial{}.pth".format(trial+1))
+  File "/home/s223540177/.local/lib/python3.8/site-packages/torch/serialization.py", line 440, in save
+    with _open_zipfile_writer(f) as opened_zipfile:
+  File "/home/s223540177/.local/lib/python3.8/site-packages/torch/serialization.py", line 315, in _open_zipfile_writer
+    return container(name_or_buffer)
+  File "/home/s223540177/.local/lib/python3.8/site-packages/torch/serialization.py", line 288, in __init__
+    super().__init__(torch._C.PyTorchFileWriter(str(name)))
+RuntimeError: Parent directory /home/s223540177/dai/SimpleRL/A2C/weights does not exist.
+Traceback (most recent call last):
+  File "main.py", line 215, in <module>
+    main(args.n_epochs, args.max_ts, args.n_trials, args.test_epochs)
+  File "main.py", line 171, in main
+    torch.save(actor.state_dict(), "/home/s223540177/dai/SimpleRL/A2C/weights/actor_trial{}.pth".format(trial+1))
+  File "/home/s223540177/.local/lib/python3.8/site-packages/torch/serialization.py", line 440, in save
+    with _open_zipfile_writer(f) as opened_zipfile:
+  File "/home/s223540177/.local/lib/python3.8/site-packages/torch/serialization.py", line 315, in _open_zipfile_writer
+    return container(name_or_buffer)
+  File "/home/s223540177/.local/lib/python3.8/site-packages/torch/serialization.py", line 288, in __init__
+    super().__init__(torch._C.PyTorchFileWriter(str(name)))
+RuntimeError: Parent directory /home/s223540177/dai/SimpleRL/A2C/weights does not exist.
