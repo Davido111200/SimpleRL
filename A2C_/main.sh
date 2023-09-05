@@ -8,7 +8,7 @@
 
 cd ~/dai/SimpleRL/A2C
 
-n_epochs=5000
+n_epochs=1000
 max_ts=1000
 n_trials=5
 

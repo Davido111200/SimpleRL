@@ -24,11 +24,15 @@ class Actor(nn.Module):
     def __init__(self, n_inputs, n_outputs):
         super(Actor, self).__init__()
         self.fc1 = nn.Linear(n_inputs, 128, device=device, dtype=torch.float32)
-        self.fc2 = nn.Linear(128, n_outputs, device=device, dtype=torch.float32)
+        self.fc2 = nn.Linear(128, 256, device=device, dtype=torch.float32)
+        self.fc3 = nn.Linear(256, 128, device=device, dtype=torch.float32)
+        self.fc4 = nn.Linear(128, n_outputs, device=device, dtype=torch.float32)
 
     def forward(self, x):
         x = F.relu(self.fc1(x))
-        x = self.fc2(x)
+        x = F.relu(self.fc2(x))
+        x = F.relu(self.fc3(x))
+        x = self.fc4(x)
         return F.softmax(x, dim=-1)
 
 class Critic(nn.Module):
@@ -36,11 +40,15 @@ class Critic(nn.Module):
     def __init__(self, n_inputs):
         super(Critic, self).__init__()
         self.fc1 = nn.Linear(n_inputs, 128, device=device, dtype=torch.float32)
-        self.fc2 = nn.Linear(128, 1, device=device, dtype=torch.float32)
+        self.fc2 = nn.Linear(128, 256, device=device, dtype=torch.float32)
+        self.fc3 = nn.Linear(256, 128, device=device, dtype=torch.float32)
+        self.fc4 = nn.Linear(128, 1, device=device, dtype=torch.float32)
 
     def forward(self, x):
         x = F.relu(self.fc1(x))
-        x = self.fc2(x)
+        x = F.relu(self.fc2(x))
+        x = F.relu(self.fc3(x))
+        x = self.fc4(x)
         return x
 
 def plot_test_scores(test_scores, filename):
@@ -95,9 +103,9 @@ def main(n_epochs, max_ts, n_trials, test_epochs):
     for trial in range(n_trials):
         scores = []
         actor = Actor(env.observation_space.shape[0], env.action_space.n).to(device)
-        actor_optimizer = optim.Adam(actor.parameters(), lr=0.0001)
+        actor_optimizer = optim.Adam(actor.parameters(), lr=0.0007)
         critic = Critic(env.observation_space.shape[0]).to(device)
-        critic_optimizer = optim.Adam(critic.parameters(), lr=0.0001)
+        critic_optimizer = optim.Adam(critic.parameters(), lr=0.0007)
 
         gamma = 0.99
 
@@ -144,7 +152,10 @@ def main(n_epochs, max_ts, n_trials, test_epochs):
                 critic_optimizer.step()
 
                 # actor update
-                loss_actor = - td_error * step_size_actor * log_prob_action * I
+                if done:
+                    loss_actor = - (reward_tensor - current_state_value.item()) * step_size_actor * log_prob_action * I
+                else:
+                    loss_actor = - (reward_tensor + next_state_value_tensor * gamma - current_state_value.item()) * step_size_actor * log_prob_action * I
                 actor_optimizer.zero_grad()
                 loss_actor.backward()
                 actor_optimizer.step()
@@ -155,8 +166,7 @@ def main(n_epochs, max_ts, n_trials, test_epochs):
                 if done:
                     break
             
-            running_reward = running_reward * 0.99 + ts * 0.01
-            scores.append(running_reward)
+            scores.append(ts)
             wandb.log({'Episode Length': ts, 'Running Reward': running_reward, 'Trial': trial, 'Epoch': epoch})
 
             if epoch % 100 == 0:
@@ -168,17 +178,17 @@ def main(n_epochs, max_ts, n_trials, test_epochs):
         trial_scores.append(scores)
         
         # save the weights of each trial
-        torch.save(actor.state_dict(), "/home/s223540177/dai/SimpleRL/A2C/weights/actor_trial{}.pth".format(trial+1))
+        torch.save(actor.state_dict(), "/home/s223540177/dai/SimpleRL/A2C_/weights/actor_trial_{}.pth".format(trial+1))
 
     for trial, scores in enumerate(trial_scores):
         wandb.log({"Trial {}".format(trial+1): scores[-1]})
     
 
-    plot_reward_trials_with_variance(trial_scores, filename="/home/s223540177/dai/SimpleRL/A2C/figs/training_plot.png", blurred_variance_factor=0.3)
+    plot_reward_trials_with_variance(trial_scores, filename="/home/s223540177/dai/SimpleRL/A2C_/figs/training_plot.png", blurred_variance_factor=0.3)
 
     # evaluate the agent with the mean of the weights
 
-    actor.load_state_dict(torch.load("/home/s223540177/dai/SimpleRL/A2C/weights/weights_trial_{}.pth".format(np.argmax(np.array(trial_scores)[:, -1]))))
+    actor.load_state_dict(torch.load("/home/s223540177/dai/SimpleRL/A2C_/weights/actor_trial_{}.pth".format(np.argmax(np.array(trial_scores)[:, -1]))))
 
     test_scores = []
     for te in range(test_epochs):
@@ -202,7 +212,7 @@ def main(n_epochs, max_ts, n_trials, test_epochs):
         print("Test Epoch: {}\tTest Score: {}".format(te, ts))
 
     # plot the reward trials
-    plot_test_scores(test_scores, filename="/home/s223540177/dai/SimpleRL/A2C/figs/test_plot.png")
+    plot_test_scores(test_scores, filename="/home/s223540177/dai/SimpleRL/A2C_/figs/test_plot.png")
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Actor-Critic')

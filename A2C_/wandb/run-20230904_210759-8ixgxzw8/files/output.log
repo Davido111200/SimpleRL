@@ -1,0 +1,151 @@
+
+Episode 0	Last length:    18	Average length: 10.00
+Episode 100	Last length:     8	Average length: 10.00
+Episode 200	Last length:    21	Average length: 10.00
+Episode 300	Last length:    40	Average length: 10.00
+Episode 400	Last length:   105	Average length: 10.00
+Episode 500	Last length:   169	Average length: 10.00
+Episode 600	Last length:   111	Average length: 10.00
+Episode 700	Last length:     8	Average length: 10.00
+Episode 800	Last length:   169	Average length: 10.00
+Episode 900	Last length:   201	Average length: 10.00
+Episode 0	Last length:    22	Average length: 10.00
+Episode 100	Last length:     9	Average length: 10.00
+Episode 200	Last length:    40	Average length: 10.00
+Episode 300	Last length:    71	Average length: 10.00
+Episode 400	Last length:    41	Average length: 10.00
+Episode 500	Last length:    26	Average length: 10.00
+Episode 600	Last length:   262	Average length: 10.00
+Episode 700	Last length:     9	Average length: 10.00
+Episode 800	Last length:     9	Average length: 10.00
+Episode 900	Last length:    44	Average length: 10.00
+Episode 0	Last length:     8	Average length: 10.00
+Episode 100	Last length:    14	Average length: 10.00
+Episode 200	Last length:    29	Average length: 10.00
+Episode 300	Last length:   100	Average length: 10.00
+Episode 400	Last length:    51	Average length: 10.00
+Episode 500	Last length:     7	Average length: 10.00
+Episode 600	Last length:    47	Average length: 10.00
+Episode 700	Last length:     9	Average length: 10.00
+Episode 800	Last length:   111	Average length: 10.00
+Episode 900	Last length:    10	Average length: 10.00
+Episode 0	Last length:    30	Average length: 10.00
+Episode 100	Last length:     9	Average length: 10.00
+Episode 200	Last length:     8	Average length: 10.00
+Episode 300	Last length:   132	Average length: 10.00
+Episode 400	Last length:   127	Average length: 10.00
+Episode 500	Last length:    84	Average length: 10.00
+Episode 600	Last length:     9	Average length: 10.00
+Episode 700	Last length:     8	Average length: 10.00
+Episode 800	Last length:     8	Average length: 10.00
+Episode 900	Last length:     8	Average length: 10.00
+Episode 0	Last length:    15	Average length: 10.00
+Episode 100	Last length:     9	Average length: 10.00
+Episode 200	Last length:    22	Average length: 10.00
+Episode 300	Last length:    30	Average length: 10.00
+Episode 400	Last length:    34	Average length: 10.00
+Episode 500	Last length:    64	Average length: 10.00
+Episode 600	Last length:    36	Average length: 10.00
+Episode 700	Last length:   218	Average length: 10.00
+Episode 800	Last length:   340	Average length: 10.00
+Episode 900	Last length:   262	Average length: 10.00
+Test Epoch: 0	Test Score: 174
+Test Epoch: 1	Test Score: 152
+Test Epoch: 2	Test Score: 145
+Test Epoch: 3	Test Score: 143
+Test Epoch: 4	Test Score: 162
+Test Epoch: 5	Test Score: 202
+Test Epoch: 6	Test Score: 153
+Test Epoch: 7	Test Score: 166
+Test Epoch: 8	Test Score: 186
+Test Epoch: 9	Test Score: 127
+Test Epoch: 10	Test Score: 161
+Test Epoch: 11	Test Score: 170
+Test Epoch: 12	Test Score: 172
+Test Epoch: 13	Test Score: 170
+Test Epoch: 14	Test Score: 143
+Test Epoch: 15	Test Score: 165
+Test Epoch: 16	Test Score: 147
+Test Epoch: 17	Test Score: 214
+Test Epoch: 18	Test Score: 182
+Test Epoch: 19	Test Score: 174
+Test Epoch: 20	Test Score: 152
+Test Epoch: 21	Test Score: 175
+Test Epoch: 22	Test Score: 165
+Test Epoch: 23	Test Score: 136
+Test Epoch: 24	Test Score: 209
+Test Epoch: 25	Test Score: 135
+Test Epoch: 26	Test Score: 173
+Test Epoch: 27	Test Score: 138
+Test Epoch: 28	Test Score: 148
+Test Epoch: 29	Test Score: 171
+Test Epoch: 30	Test Score: 126
+Test Epoch: 31	Test Score: 137
+Test Epoch: 32	Test Score: 183
+Test Epoch: 33	Test Score: 163
+Test Epoch: 34	Test Score: 158
+Test Epoch: 35	Test Score: 140
+Test Epoch: 36	Test Score: 159
+Test Epoch: 37	Test Score: 148
+Test Epoch: 38	Test Score: 140
+Test Epoch: 39	Test Score: 156
+Test Epoch: 40	Test Score: 151
+Test Epoch: 41	Test Score: 161
+Test Epoch: 42	Test Score: 195
+Test Epoch: 43	Test Score: 173
+Test Epoch: 44	Test Score: 125
+Test Epoch: 45	Test Score: 153
+Test Epoch: 46	Test Score: 136
+Test Epoch: 47	Test Score: 173
+Test Epoch: 48	Test Score: 151
+Test Epoch: 49	Test Score: 150
+Test Epoch: 50	Test Score: 159
+Test Epoch: 51	Test Score: 171
+Test Epoch: 52	Test Score: 150
+Test Epoch: 53	Test Score: 165
+Test Epoch: 54	Test Score: 207
+Test Epoch: 55	Test Score: 150
+Test Epoch: 56	Test Score: 141
+Test Epoch: 57	Test Score: 121
+Test Epoch: 58	Test Score: 155
+Test Epoch: 59	Test Score: 131
+Test Epoch: 60	Test Score: 153
+Test Epoch: 61	Test Score: 135
+Test Epoch: 62	Test Score: 131
+Test Epoch: 63	Test Score: 191
+Test Epoch: 64	Test Score: 138
+Test Epoch: 65	Test Score: 130
+Test Epoch: 66	Test Score: 129
+Test Epoch: 67	Test Score: 137
+Test Epoch: 68	Test Score: 126
+Test Epoch: 69	Test Score: 134
+Test Epoch: 70	Test Score: 150
+Test Epoch: 71	Test Score: 189
+Test Epoch: 72	Test Score: 153
+Test Epoch: 73	Test Score: 141
+Test Epoch: 74	Test Score: 170
+Test Epoch: 75	Test Score: 181
+Test Epoch: 76	Test Score: 162
+Test Epoch: 77	Test Score: 123
+Test Epoch: 78	Test Score: 160
+Test Epoch: 79	Test Score: 144
+Test Epoch: 80	Test Score: 130
+Test Epoch: 81	Test Score: 150
+Test Epoch: 82	Test Score: 157
+Test Epoch: 83	Test Score: 146
+Test Epoch: 84	Test Score: 134
+Test Epoch: 85	Test Score: 158
+Test Epoch: 86	Test Score: 132
+Test Epoch: 87	Test Score: 227
+Test Epoch: 88	Test Score: 149
+Test Epoch: 89	Test Score: 135
+Test Epoch: 90	Test Score: 132
+Test Epoch: 91	Test Score: 202
+Test Epoch: 92	Test Score: 154
+Test Epoch: 93	Test Score: 160
+Test Epoch: 94	Test Score: 145
+Test Epoch: 95	Test Score: 151
+Test Epoch: 96	Test Score: 139
+Test Epoch: 97	Test Score: 141
+Test Epoch: 98	Test Score: 157
+Test Epoch: 99	Test Score: 136

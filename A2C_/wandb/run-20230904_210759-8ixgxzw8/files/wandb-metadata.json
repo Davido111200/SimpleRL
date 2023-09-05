@@ -1,0 +1,49 @@
+{
+    "os": "Linux-5.4.0-153-generic-x86_64-with-glibc2.29",
+    "python": "3.8.10",
+    "heartbeatAt": "2023-09-04T11:08:00.158130",
+    "startedAt": "2023-09-04T11:07:59.386402",
+    "docker": null,
+    "cuda": null,
+    "args": [
+        "--n_epochs",
+        "1000",
+        "--max_ts",
+        "1000",
+        "--n_trials",
+        "5"
+    ],
+    "state": "running",
+    "program": "main.py",
+    "codePath": "A2C_/main.py",
+    "git": {
+        "remote": "https://github.com/Davido111200/SimpleRL.git",
+        "commit": "aee12e3ebe6ffcff4fd8417f1c019c97c6411adf"
+    },
+    "email": "davido111200@gmail.com",
+    "root": "/home/s223540177/dai/SimpleRL",
+    "host": "a100-4",
+    "username": "s223540177",
+    "executable": "/usr/bin/python3",
+    "cpu_count": 64,
+    "cpu_count_logical": 128,
+    "disk": {
+        "total": 446.8488883972168,
+        "used": 381.0909080505371
+    },
+    "gpu": "NVIDIA A100-SXM4-40GB",
+    "gpu_count": 2,
+    "gpu_devices": [
+        {
+            "name": "NVIDIA A100-SXM4-40GB",
+            "memory_total": 42949672960
+        },
+        {
+            "name": "NVIDIA A100-SXM4-40GB",
+            "memory_total": 42949672960
+        }
+    ],
+    "memory": {
+        "total": 1007.5443496704102
+    }
+}

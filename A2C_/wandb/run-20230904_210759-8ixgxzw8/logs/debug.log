@@ -1,0 +1,33 @@
+2023-09-04 21:07:59,396 INFO    MainThread:3705810 [wandb_setup.py:_flush():76] Current SDK version is 0.15.9
+2023-09-04 21:07:59,396 INFO    MainThread:3705810 [wandb_setup.py:_flush():76] Configure stats pid to 3705810
+2023-09-04 21:07:59,396 INFO    MainThread:3705810 [wandb_setup.py:_flush():76] Loading settings from /home/s223540177/.config/wandb/settings
+2023-09-04 21:07:59,396 INFO    MainThread:3705810 [wandb_setup.py:_flush():76] Loading settings from /home/s223540177/dai/SimpleRL/A2C_/wandb/settings
+2023-09-04 21:07:59,396 INFO    MainThread:3705810 [wandb_setup.py:_flush():76] Loading settings from environment variables: {'api_key': '***REDACTED***'}
+2023-09-04 21:07:59,396 INFO    MainThread:3705810 [wandb_setup.py:_flush():76] Applying setup settings: {'_disable_service': False}
+2023-09-04 21:07:59,396 INFO    MainThread:3705810 [wandb_setup.py:_flush():76] Inferring run settings from compute environment: {'program_relpath': 'A2C_/main.py', 'program': 'main.py'}
+2023-09-04 21:07:59,396 INFO    MainThread:3705810 [wandb_init.py:_log_setup():524] Logging user logs to /home/s223540177/dai/SimpleRL/A2C_/wandb/run-20230904_210759-8ixgxzw8/logs/debug.log
+2023-09-04 21:07:59,396 INFO    MainThread:3705810 [wandb_init.py:_log_setup():525] Logging internal logs to /home/s223540177/dai/SimpleRL/A2C_/wandb/run-20230904_210759-8ixgxzw8/logs/debug-internal.log
+2023-09-04 21:07:59,396 INFO    MainThread:3705810 [wandb_init.py:init():564] calling init triggers
+2023-09-04 21:07:59,396 INFO    MainThread:3705810 [wandb_init.py:init():571] wandb.init called with sweep_config: {}
+config: {'n_epochs': 1000, 'max_ts': 1000, 'n_trials': 5}
+2023-09-04 21:07:59,396 INFO    MainThread:3705810 [wandb_init.py:init():613] starting backend
+2023-09-04 21:07:59,396 INFO    MainThread:3705810 [wandb_init.py:init():617] setting up manager
+2023-09-04 21:07:59,398 INFO    MainThread:3705810 [backend.py:_multiprocessing_setup():106] multiprocessing start_methods=fork,spawn,forkserver, using: spawn
+2023-09-04 21:07:59,399 INFO    MainThread:3705810 [wandb_init.py:init():623] backend started and connected
+2023-09-04 21:07:59,403 INFO    MainThread:3705810 [wandb_init.py:init():714] updated telemetry
+2023-09-04 21:07:59,416 INFO    MainThread:3705810 [wandb_init.py:init():747] communicating run to backend with 60.0 second timeout
+2023-09-04 21:07:59,988 INFO    MainThread:3705810 [wandb_run.py:_on_init():2180] communicating current version
+2023-09-04 21:08:00,115 INFO    MainThread:3705810 [wandb_run.py:_on_init():2189] got version response 
+2023-09-04 21:08:00,115 INFO    MainThread:3705810 [wandb_init.py:init():798] starting run threads in backend
+2023-09-04 21:08:00,187 INFO    MainThread:3705810 [wandb_run.py:_console_start():2159] atexit reg
+2023-09-04 21:08:00,187 INFO    MainThread:3705810 [wandb_run.py:_redirect():2014] redirect: wrap_raw
+2023-09-04 21:08:00,187 INFO    MainThread:3705810 [wandb_run.py:_redirect():2079] Wrapping output streams.
+2023-09-04 21:08:00,187 INFO    MainThread:3705810 [wandb_run.py:_redirect():2104] Redirects installed.
+2023-09-04 21:08:00,187 INFO    MainThread:3705810 [wandb_init.py:init():839] run started, returning control to user process
+2023-09-04 21:48:16,388 INFO    MainThread:3705810 [wandb_run.py:_finish():1894] finishing run daidv/A2C_CartPole-v1/8ixgxzw8
+2023-09-04 21:48:16,388 INFO    MainThread:3705810 [wandb_run.py:_atexit_cleanup():2128] got exitcode: 0
+2023-09-04 21:48:16,388 INFO    MainThread:3705810 [wandb_run.py:_restore():2111] restore
+2023-09-04 21:48:16,388 INFO    MainThread:3705810 [wandb_run.py:_restore():2117] restore done
+2023-09-04 21:48:24,859 INFO    MainThread:3705810 [wandb_run.py:_footer_history_summary_info():3481] rendering history
+2023-09-04 21:48:24,859 INFO    MainThread:3705810 [wandb_run.py:_footer_history_summary_info():3513] rendering summary
+2023-09-04 21:48:24,862 INFO    MainThread:3705810 [wandb_run.py:_footer_sync_info():3440] logging synced files
