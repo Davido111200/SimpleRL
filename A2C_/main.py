@@ -163,16 +163,16 @@ def main(n_epochs, max_ts, n_trials, test_epochs):
         trial_scores.append(scores)
         
         # save the weights of each trial
-        torch.save(actor.state_dict(), "/home/s223540177/dai/SimpleRL/A2C_/weights/actor_trial_{}.pth".format(trial))
+        torch.save(actor.state_dict(), "../A2C_/weights/actor_trial_{}.pth".format(trial))
 
     for trial, scores in enumerate(trial_scores):
         wandb.log({"Trial {}".format(trial+1): scores[-1]})
     
-    plot_reward_trials_with_variance(trial_scores, filename="/home/s223540177/dai/SimpleRL/A2C_/figs/training_plot.png", blurred_variance_factor=0.3)
+    plot_reward_trials_with_variance(trial_scores, filename="../A2C_/figs/training_plot.png", blurred_variance_factor=0.3)
 
     # evaluate the agent with the mean of the weights
 
-    actor.load_state_dict(torch.load("/home/s223540177/dai/SimpleRL/A2C_/weights/actor_trial_{}.pth".format(np.argmax(np.array(trial_scores)[:, -1]))))
+    actor.load_state_dict(torch.load("../A2C_/weights/actor_trial_{}.pth".format(np.argmax(np.array(trial_scores)[:, -1]))))
 
     test_scores = []
     for epoch in range(test_epochs):
@@ -203,7 +203,7 @@ def main(n_epochs, max_ts, n_trials, test_epochs):
                 "the last episode runs to {} time steps!".format(running_reward, ts))
 
     # plot the reward trials
-    plot_test_scores(test_scores, filename="/home/s223540177/dai/SimpleRL/A2C_/figs/test_plot.png")
+    plot_test_scores(test_scores, filename="../A2C_/figs/test_plot.png")
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Actor-Critic')
