@@ -23,32 +23,24 @@ class Actor(nn.Module):
     "Simple Actor Network - takes in state and outputs action probabilities"
     def __init__(self, n_inputs, n_outputs):
         super(Actor, self).__init__()
-        self.fc1 = nn.Linear(n_inputs, 128, device=device, dtype=torch.float32)
-        self.fc2 = nn.Linear(128, 256, device=device, dtype=torch.float32)
-        self.fc3 = nn.Linear(256, 128, device=device, dtype=torch.float32)
-        self.fc4 = nn.Linear(128, n_outputs, device=device, dtype=torch.float32)
+        self.fc1 = nn.Linear(n_inputs, 512, device=device, dtype=torch.float32)
+        self.fc2 = nn.Linear(512, n_outputs, device=device, dtype=torch.float32)
 
     def forward(self, x):
         x = F.relu(self.fc1(x))
-        x = F.relu(self.fc2(x))
-        x = F.relu(self.fc3(x))
-        x = self.fc4(x)
+        x = self.fc2(x)
         return F.softmax(x, dim=-1)
 
 class Critic(nn.Module):
     "Simple Critic Network - takes in state and outputs state value"
     def __init__(self, n_inputs):
         super(Critic, self).__init__()
-        self.fc1 = nn.Linear(n_inputs, 128, device=device, dtype=torch.float32)
-        self.fc2 = nn.Linear(128, 256, device=device, dtype=torch.float32)
-        self.fc3 = nn.Linear(256, 128, device=device, dtype=torch.float32)
-        self.fc4 = nn.Linear(128, 1, device=device, dtype=torch.float32)
+        self.fc1 = nn.Linear(n_inputs, 512, device=device, dtype=torch.float32)
+        self.fc2 = nn.Linear(512, 1, device=device, dtype=torch.float32)
 
     def forward(self, x):
         x = F.relu(self.fc1(x))
-        x = F.relu(self.fc2(x))
-        x = F.relu(self.fc3(x))
-        x = self.fc4(x)
+        x = self.fc2(x)
         return x
 
 def plot_test_scores(test_scores, filename):
@@ -109,9 +101,6 @@ def main(n_epochs, max_ts, n_trials, test_epochs):
 
         gamma = 0.99
 
-        step_size_actor = 0.9
-        step_size_critic = 0.9
-
         running_reward = 10
 
         for epoch in range(n_epochs):
@@ -133,16 +122,11 @@ def main(n_epochs, max_ts, n_trials, test_epochs):
 
                 current_state_value = critic(state)
 
-                if done:
-                    td_error = reward - current_state_value.item()
-                else:
-                    next_state = torch.from_numpy(next_state).float().to(device)
-                    next_state_value = critic(next_state)
-                    td_error = reward + gamma * next_state_value.item() - current_state_value.item()
-                
+                next_state = torch.from_numpy(next_state).float().to(device)
+
                 # Create detached tensors for gradient computation
                 reward_tensor = torch.tensor([reward], dtype=torch.float32, device=device)
-                next_state_value_tensor = torch.tensor([next_state_value.item()], dtype=torch.float32, device=device) if not done else torch.tensor([0.0], dtype=torch.float32, device=device)
+                next_state_value_tensor = torch.tensor([critic(next_state).item()], dtype=torch.float32, device=device) if not done else torch.tensor([0.0], dtype=torch.float32, device=device)
 
                 # critic update
                 criterion = nn.MSELoss()
@@ -153,9 +137,9 @@ def main(n_epochs, max_ts, n_trials, test_epochs):
 
                 # actor update
                 if done:
-                    loss_actor = - (reward_tensor - current_state_value.item()) * step_size_actor * log_prob_action * I
+                    loss_actor = - (reward_tensor - current_state_value.item()) * log_prob_action * I
                 else:
-                    loss_actor = - (reward_tensor + next_state_value_tensor * gamma - current_state_value.item()) * step_size_actor * log_prob_action * I
+                    loss_actor = - (reward_tensor + next_state_value_tensor * gamma - current_state_value.item()) * log_prob_action * I
                 actor_optimizer.zero_grad()
                 loss_actor.backward()
                 actor_optimizer.step()
@@ -167,7 +151,8 @@ def main(n_epochs, max_ts, n_trials, test_epochs):
                     break
             
             scores.append(ts)
-            wandb.log({'Episode Length': ts, 'Running Reward': running_reward, 'Trial': trial, 'Epoch': epoch})
+            wandb.log({'Episode Length': ts, 'Running Reward': running_reward, 'Trial': trial,
+                       'Actor Loss': loss_actor.item(), 'Critic Loss': loss_critic.item()})
 
             if epoch % 100 == 0:
                 print('Episode {}\tLast length: {:5d}\tAverage length: {:.2f}'.format(
@@ -178,12 +163,11 @@ def main(n_epochs, max_ts, n_trials, test_epochs):
         trial_scores.append(scores)
         
         # save the weights of each trial
-        torch.save(actor.state_dict(), "/home/s223540177/dai/SimpleRL/A2C_/weights/actor_trial_{}.pth".format(trial+1))
+        torch.save(actor.state_dict(), "/home/s223540177/dai/SimpleRL/A2C_/weights/actor_trial_{}.pth".format(trial))
 
     for trial, scores in enumerate(trial_scores):
         wandb.log({"Trial {}".format(trial+1): scores[-1]})
     
-
     plot_reward_trials_with_variance(trial_scores, filename="/home/s223540177/dai/SimpleRL/A2C_/figs/training_plot.png", blurred_variance_factor=0.3)
 
     # evaluate the agent with the mean of the weights
@@ -191,32 +175,39 @@ def main(n_epochs, max_ts, n_trials, test_epochs):
     actor.load_state_dict(torch.load("/home/s223540177/dai/SimpleRL/A2C_/weights/actor_trial_{}.pth".format(np.argmax(np.array(trial_scores)[:, -1]))))
 
     test_scores = []
-    for te in range(test_epochs):
+    for epoch in range(test_epochs):
         state, _ = env.reset()
-        done = False
-        ts = 0
-        while not done:
-            state = torch.from_numpy(state).float().to(device)
+        state = torch.from_numpy(state).float().to(device)
+        for ts in range(max_ts):
             action_probs = actor(state)
             action_dist = torch.distributions.Categorical(action_probs)
-            action = action_dist.sample()
+            
+            # select the action with the highest probability
+            action = torch.argmax(action_probs) 
 
             next_state, reward, terminated, truncated, _ = env.step(action.item())
 
             done = terminated or truncated
 
-            state = next_state
-            ts += 1
+            state = torch.from_numpy(next_state).float().to(device)
 
+            if done:
+                break
         test_scores.append(ts)
-        print("Test Epoch: {}\tTest Score: {}".format(te, ts))
+        wandb.log({'Test Episode Length': ts, 'Test Epoch': epoch})
+        if epoch % 100 == 0:
+            print('Test Episode {}\tLast length: {:5d}'.format(
+                epoch, ts))
+        if running_reward > env.spec.reward_threshold:
+            print("Solved! Running reward is now {} and "
+                "the last episode runs to {} time steps!".format(running_reward, ts))
 
     # plot the reward trials
     plot_test_scores(test_scores, filename="/home/s223540177/dai/SimpleRL/A2C_/figs/test_plot.png")
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Actor-Critic')
-    parser.add_argument('--n_epochs', type=int, default=1000, help='number of epochs')
+    parser.add_argument('--n_epochs', type=int, default=500, help='number of epochs')
     parser.add_argument('--max_ts', type=int, default=1000, help='max time steps')
     parser.add_argument('--n_trials', type=int, default=5, help='number of trials')
     parser.add_argument('--test_epochs', type=int, default=100, help='number of test epochs')

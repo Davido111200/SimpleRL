@@ -193,7 +193,7 @@ if __name__ == "__main__":
     parser.add_argument("--n_epochs", type=int, default=1000)
     parser.add_argument("--max_ts", type=int, default=1000)
     parser.add_argument("--n_trials", type=int, default=5)
-    parser.add_argument("--test_epochs", type=int, default=100)
+    parser.add_argument("--test_epochs", type=int, default=1000)
     args = parser.parse_args()
     main(args.n_epochs, args.max_ts, args.n_trials, args.test_epochs)
     

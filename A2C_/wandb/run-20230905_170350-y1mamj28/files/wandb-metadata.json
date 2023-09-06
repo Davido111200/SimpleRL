@@ -1,0 +1,30 @@
+{
+    "os": "Linux-5.4.0-153-generic-x86_64-with-glibc2.29",
+    "python": "3.8.10",
+    "heartbeatAt": "2023-09-05T07:03:51.633430",
+    "startedAt": "2023-09-05T07:03:50.815362",
+    "docker": null,
+    "cuda": null,
+    "args": [],
+    "state": "running",
+    "program": "main.py",
+    "codePath": "A2C_/main.py",
+    "git": {
+        "remote": "https://github.com/Davido111200/SimpleRL.git",
+        "commit": "27969c4909c2609d06b2e903a7fc21fa47380f59"
+    },
+    "email": "davido111200@gmail.com",
+    "root": "/home/s223540177/dai/SimpleRL",
+    "host": "login",
+    "username": "s223540177",
+    "executable": "/usr/bin/python3",
+    "cpu_count": 32,
+    "cpu_count_logical": 64,
+    "disk": {
+        "total": 108.94742202758789,
+        "used": 72.88066482543945
+    },
+    "memory": {
+        "total": 251.3022117614746
+    }
+}

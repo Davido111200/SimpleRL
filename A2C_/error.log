@@ -1,38 +1,152 @@
-/var/spool/slurm/d/job142730/slurm_script: line 9: cd: /home/s223540177/dai/SimpleRL/A2C: No such file or directory
+/var/spool/slurm/d/job142762/slurm_script: line 9: cd: /home/s223540177/dai/SimpleRL/A2C: No such file or directory
 /usr/lib/python3/dist-packages/requests/__init__.py:89: RequestsDependencyWarning: urllib3 (1.26.16) or chardet (3.0.4) doesn't match a supported version!
   warnings.warn("urllib3 ({}) or chardet ({}) doesn't match a supported "
-wandb: ERROR api_key not configured (no-tty). call wandb.login(key=[your_api_key])
+wandb: Currently logged in as: daidv. Use `wandb login --relogin` to force relogin
+wandb: Tracking run with wandb version 0.15.9
+wandb: Run data is saved locally in /home/s223540177/dai/SimpleRL/A2C_/wandb/run-20230905_132055-867ge6jt
+wandb: Run `wandb offline` to turn off syncing.
+wandb: Syncing run fearless-eon-31
+wandb: ⭐️ View project at https://wandb.ai/daidv/A2C_CartPole-v1
+wandb: 🚀 View run at https://wandb.ai/daidv/A2C_CartPole-v1/runs/867ge6jt
 Traceback (most recent call last):
-  File "main.py", line 224, in <module>
-    main(args.n_epochs, args.max_ts, args.n_trials, args.test_epochs)
-  File "main.py", line 99, in main
-    wandb.init(project='A2C_CartPole-v1', config={'n_epochs': n_epochs, 'max_ts': max_ts, 'n_trials': n_trials})
-  File "/home/s223540177/.local/lib/python3.8/site-packages/wandb/sdk/wandb_init.py", line 1183, in init
-    raise e
-  File "/home/s223540177/.local/lib/python3.8/site-packages/wandb/sdk/wandb_init.py", line 1160, in init
-    wi.setup(kwargs)
-  File "/home/s223540177/.local/lib/python3.8/site-packages/wandb/sdk/wandb_init.py", line 306, in setup
-    wandb_login._login(
-  File "/home/s223540177/.local/lib/python3.8/site-packages/wandb/sdk/wandb_login.py", line 298, in _login
-    wlogin.prompt_api_key()
-  File "/home/s223540177/.local/lib/python3.8/site-packages/wandb/sdk/wandb_login.py", line 228, in prompt_api_key
-    raise UsageError("api_key not configured (no-tty). call " + directive)
-wandb.errors.UsageError: api_key not configured (no-tty). call wandb.login(key=[your_api_key])
+  File "main.py", line 217, in <module>
+  File "main.py", line 184, in main
+    # loss_critic = criterion(current_state_value, reward_tensor + gamma * next_state_value_tensor)
+  File "/home/s223540177/.local/lib/python3.8/site-packages/torch/serialization.py", line 791, in load
+    with _open_file_like(f, 'rb') as opened_file:
+  File "/home/s223540177/.local/lib/python3.8/site-packages/torch/serialization.py", line 271, in _open_file_like
+    return _open_file(name_or_buffer, mode)
+  File "/home/s223540177/.local/lib/python3.8/site-packages/torch/serialization.py", line 252, in __init__
+    super().__init__(open(name, mode))
+FileNotFoundError: [Errno 2] No such file or directory: '/home/s223540177/dai/SimpleRL/A2C_/weights/actor_trial_0.pth'
 Traceback (most recent call last):
-  File "main.py", line 224, in <module>
-    main(args.n_epochs, args.max_ts, args.n_trials, args.test_epochs)
-  File "main.py", line 99, in main
-    wandb.init(project='A2C_CartPole-v1', config={'n_epochs': n_epochs, 'max_ts': max_ts, 'n_trials': n_trials})   
-  File "/home/s223540177/.local/lib/python3.8/site-packages/wandb/sdk/wandb_init.py", line 1183, in init
-    raise e
-  File "/home/s223540177/.local/lib/python3.8/site-packages/wandb/sdk/wandb_init.py", line 1160, in init
-    wi.setup(kwargs)
-  File "/home/s223540177/.local/lib/python3.8/site-packages/wandb/sdk/wandb_init.py", line 306, in setup
-    wandb_login._login(
-  File "/home/s223540177/.local/lib/python3.8/site-packages/wandb/sdk/wandb_login.py", line 298, in _login
-    wlogin.prompt_api_key()
-  File "/home/s223540177/.local/lib/python3.8/site-packages/wandb/sdk/wandb_login.py", line 228, in prompt_api_key
-    raise UsageError("api_key not configured (no-tty). call " + directive)
-wandb.errors.UsageError: api_key not configured (no-tty). call wandb.login(key=[your_api_key])
+  File "main.py", line 217, in <module>
+    
+  File "main.py", line 184, in main
+    # loss_critic = criterion(current_state_value, reward_tensor + gamma * next_state_value_tensor)
+  File "/home/s223540177/.local/lib/python3.8/site-packages/torch/serialization.py", line 791, in load
+    with _open_file_like(f, 'rb') as opened_file:
+  File "/home/s223540177/.local/lib/python3.8/site-packages/torch/serialization.py", line 271, in _open_file_like
+    return _open_file(name_or_buffer, mode)
+  File "/home/s223540177/.local/lib/python3.8/site-packages/torch/serialization.py", line 252, in __init__
+    super().__init__(open(name, mode))
+FileNotFoundError: [Errno 2] No such file or directory: '/home/s223540177/dai/SimpleRL/A2C_/weights/actor_trial_0.pth'
 /usr/lib/python3/dist-packages/requests/__init__.py:89: RequestsDependencyWarning: urllib3 (1.26.16) or chardet (3.0.4) doesn't match a supported version!
   warnings.warn("urllib3 ({}) or chardet ({}) doesn't match a supported "
+wandb: Waiting for W&B process to finish... (failed 1). Press Control-C to abort syncing.
+wandb: 
+wandb: Run history:
+wandb:     Actor Loss █▂██▆█████▇▁██████▇███▇█▆▄▅██▃▇██▇██████
+wandb:    Critic Loss ▁▁▁▁▁▄▁▄▁▁▁██▁▁▁▁▁▂▁▁▃▁▁▁▁▂▂▁▃▂▁▁▁▂▁▁▁▁▁
+wandb: Episode Length ▁▁▂▃▁▂▃█▁▁▂▂▅▁▁▁▁▁▂▂▂▃▂▃▁▁▃▁▂▂▄▁▁▁▁▃▂▄▁▁
+wandb:          Epoch ▁▂▃▄▅▅▆▇▁▂▃▄▅▆▇▇▁▂▃▄▅▆▇█▁▂▃▄▅▆▇█▂▂▃▄▅▆▇█
+wandb: Running Reward ▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁
+wandb:          Trial ▁▁▁▁▁▁▁▁▃▃▃▃▃▃▃▃▅▅▅▅▅▅▅▅▆▆▆▆▆▆▆▆████████
+wandb:        Trial 1 ▁
+wandb:        Trial 2 ▁
+wandb:        Trial 3 ▁
+wandb:        Trial 4 ▁
+wandb:        Trial 5 ▁
+wandb: 
+wandb: Run summary:
+wandb:     Actor Loss 0.0
+wandb:    Critic Loss 12.03121
+wandb: Episode Length 9
+wandb:          Epoch 999
+wandb: Running Reward 10
+wandb:          Trial 4
+wandb:        Trial 1 499
+wandb:        Trial 2 8
+wandb:        Trial 3 9
+wandb:        Trial 4 9
+wandb:        Trial 5 9
+wandb: 
+wandb: 🚀 View run fearless-eon-31 at: https://wandb.ai/daidv/A2C_CartPole-v1/runs/867ge6jt
+wandb: ️⚡ View job at https://wandb.ai/daidv/A2C_CartPole-v1/jobs/QXJ0aWZhY3RDb2xsZWN0aW9uOjk0NjUyMTkx/version_details/v12
+wandb: Synced 5 W&B file(s), 0 media file(s), 0 artifact file(s) and 0 other file(s)
+wandb: Find logs at: ./wandb/run-20230905_132055-867ge6jt/logs
+Traceback (most recent call last):
+  File "main.py", line 217, in <module>
+    # save the weights of each trial
+  File "main.py", line 184, in main
+    # # critic update
+  File "/home/s223540177/.local/lib/python3.8/site-packages/torch/nn/modules/module.py", line 2041, in load_state_dict
+    raise RuntimeError('Error(s) in loading state_dict for {}:\n\t{}'.format(
+RuntimeError: Error(s) in loading state_dict for Actor:
+	size mismatch for fc1.weight: copying a param with shape torch.Size([128, 4]) from checkpoint, the shape in current model is torch.Size([512, 4]).
+	size mismatch for fc1.bias: copying a param with shape torch.Size([128]) from checkpoint, the shape in current model is torch.Size([512]).
+	size mismatch for fc2.weight: copying a param with shape torch.Size([2, 128]) from checkpoint, the shape in current model is torch.Size([2, 512]).
+Traceback (most recent call last):
+  File "main.py", line 217, in <module>
+    # save the weights of each trial
+  File "main.py", line 184, in main
+    # # critic update
+  File "/home/s223540177/.local/lib/python3.8/site-packages/torch/nn/modules/module.py", line 2041, in load_state_dict
+    raise RuntimeError('Error(s) in loading state_dict for {}:\n\t{}'.format(
+RuntimeError: Error(s) in loading state_dict for Actor:
+	size mismatch for fc1.weight: copying a param with shape torch.Size([128, 4]) from checkpoint, the shape in current model is torch.Size([512, 4]).
+	size mismatch for fc1.bias: copying a param with shape torch.Size([128]) from checkpoint, the shape in current model is torch.Size([512]).
+	size mismatch for fc2.weight: copying a param with shape torch.Size([2, 128]) from checkpoint, the shape in current model is torch.Size([2, 512]).
+/usr/lib/python3/dist-packages/requests/__init__.py:89: RequestsDependencyWarning: urllib3 (1.26.16) or chardet (3.0.4) doesn't match a supported version!
+  warnings.warn("urllib3 ({}) or chardet ({}) doesn't match a supported "
+wandb: Waiting for W&B process to finish... (failed 1). Press Control-C to abort syncing.
+wandb: 
+wandb: Run history:
+wandb:     Actor Loss █▁▇███▆██▇████████▂█████████████▆▇▅█████
+wandb:    Critic Loss ▁▂▁▁▁▁▂▁▁▁▂▁▁▃▁▆▁▁▁▁█▁▃▄▁▁▁▅▁▁▁▁▁▂▃▁▁▁▁▁
+wandb: Episode Length ▁▁▁▂▃▃▄▅▁▁▃▂▂▂▂█▁▁▁▁▁▃██▁▁▂▁▁▁▁▁▁▂▂▁▁▁▁▁
+wandb:          Epoch ▁▂▃▄▅▅▆▇▁▂▃▄▅▆▇▇▁▂▃▄▅▆▇█▁▂▃▄▅▆▇█▂▂▃▄▅▆▇█
+wandb: Running Reward ▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁
+wandb:          Trial ▁▁▁▁▁▁▁▁▃▃▃▃▃▃▃▃▅▅▅▅▅▅▅▅▆▆▆▆▆▆▆▆████████
+wandb:        Trial 1 ▁
+wandb:        Trial 2 ▁
+wandb:        Trial 3 ▁
+wandb:        Trial 4 ▁
+wandb:        Trial 5 ▁
+wandb: 
+wandb: Run summary:
+wandb:     Actor Loss -0.0
+wandb:    Critic Loss 0.01203
+wandb: Episode Length 7
+wandb:          Epoch 999
+wandb: Running Reward 10
+wandb:          Trial 4
+wandb:        Trial 1 270
+wandb:        Trial 2 263
+wandb:        Trial 3 322
+wandb:        Trial 4 9
+wandb:        Trial 5 7
+wandb: 
+wandb: 🚀 View run hearty-snowball-30 at: https://wandb.ai/daidv/A2C_CartPole-v1/runs/48qkz53s
+wandb: ️⚡ View job at https://wandb.ai/daidv/A2C_CartPole-v1/jobs/QXJ0aWZhY3RDb2xsZWN0aW9uOjk0NjUyMTkx/version_details/v13
+wandb: Synced 5 W&B file(s), 0 media file(s), 0 artifact file(s) and 0 other file(s)
+wandb: Find logs at: ./wandb/run-20230905_130430-48qkz53s/logs
+Exception in thread NetStatThr:
+Traceback (most recent call last):
+  File "/usr/lib/python3.8/threading.py", line 932, in _bootstrap_inner
+    self.run()
+  File "/usr/lib/python3.8/threading.py", line 870, in run
+    self._target(*self._args, **self._kwargs)
+  File "/home/s223540177/.local/lib/python3.8/site-packages/wandb/sdk/wandb_run.py", line 256, in check_network_status
+    self._loop_check_status(
+  File "/home/s223540177/.local/lib/python3.8/site-packages/wandb/sdk/wandb_run.py", line 212, in _loop_check_status
+    local_handle = request()
+  File "/home/s223540177/.local/lib/python3.8/site-packages/wandb/sdk/interface/interface.py", line 864, in deliver_network_status
+    return self._deliver_network_status(status)
+  File "/home/s223540177/.local/lib/python3.8/site-packages/wandb/sdk/interface/interface_shared.py", line 610, in _deliver_network_status
+    return self._deliver_record(record)
+  File "/home/s223540177/.local/lib/python3.8/site-packages/wandb/sdk/interface/interface_shared.py", line 569, in _deliver_record
+    handle = mailbox._deliver_record(record, interface=self)
+  File "/home/s223540177/.local/lib/python3.8/site-packages/wandb/sdk/lib/mailbox.py", line 455, in _deliver_record
+    interface._publish(record)
+  File "/home/s223540177/.local/lib/python3.8/site-packages/wandb/sdk/interface/interface_sock.py", line 51, in _publish
+    self._sock_client.send_record_publish(record)
+  File "/home/s223540177/.local/lib/python3.8/site-packages/wandb/sdk/lib/sock_client.py", line 221, in send_record_publish
+    self.send_server_request(server_req)
+  File "/home/s223540177/.local/lib/python3.8/site-packages/wandb/sdk/lib/sock_client.py", line 155, in send_server_request
+    self._send_message(msg)
+  File "/home/s223540177/.local/lib/python3.8/site-packages/wandb/sdk/lib/sock_client.py", line 152, in _send_message
+    self._sendall_with_error_handle(header + data)
+  File "/home/s223540177/.local/lib/python3.8/site-packages/wandb/sdk/lib/sock_client.py", line 130, in _sendall_with_error_handle
+    sent = self._sock.send(data)
+BrokenPipeError: [Errno 32] Broken pipe

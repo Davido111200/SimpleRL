@@ -1,0 +1,1 @@
+{"Episode Length": 8, "Running Reward": 10, "Trial": 4, "Actor Loss": 2.999576508955215e-06, "Critic Loss": 743.594970703125, "_timestamp": 1693896869.6842632, "_runtime": 595.4608793258667, "_step": 2604, "Trial 1": 107, "Trial 2": 24, "Trial 3": 28, "Trial 4": 7, "Trial 5": 8, "Test Episode Length": 33, "Test Epoch": 99, "_wandb": {"runtime": 594}}
