@@ -13,7 +13,7 @@ from collections import namedtuple
 from torch.distributions import Categorical
 import wandb  
 
-device = torch.device('gpu' if torch.cuda.is_available() else 'cpu')
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 class Neural_net(nn.Module):
     "Simple policy and value function"
@@ -31,14 +31,15 @@ class PPO:
     def __init__(self, env, batch_size, epsilon) -> None:
         self.actor = Neural_net(env.observation_space.shape[0], env.action_space.shape[0]).to(device)
         self.critic = Neural_net(env.observation_space.shape[0], 1).to(device)
-        self.actor_optimizer = optim.Adam(self.actor.parameters(), lr=1e-3)
-        self.critic_optimizer = optim.Adam(self.critic.parameters(), lr=1e-3)
+        self.actor_optimizer = optim.Adam(self.actor.parameters(), lr=3e-4)
+        self.critic_optimizer = optim.Adam(self.critic.parameters(), lr=3e-4)
 
         self.env = env 
         self.discount_factor = 0.99
         self.batch_size = batch_size
         self.epsilon = epsilon
-
+        self.n_update_per_epoch = 10
+        self.max_ts = 1000000
         # initialize the covanriance matrix used to query the actor for actions
         self.cov_var = torch.full(size=(env.action_space.shape[0],), fill_value=0.5)
         self.cov_mat = torch.diag(self.cov_var).to(device)
@@ -65,14 +66,18 @@ class PPO:
         We go reverse to get the full trajectory rtgs
         """
         rtgs = []
-
-        discounted_reward = 0
-
-        for rew in reversed(rewards):
-            discounted_reward = rew + discount_factor * discounted_reward
-            rtgs.append(discounted_reward)
+        
+        for ep_rew in reversed(rewards):
+            discounted_reward = 0  # Initialize with a float
+            print(ep_rew)
+            for rew in reversed(ep_rew):
+                discounted_reward = rew + discount_factor * discounted_reward
+                rtgs.insert(0, discounted_reward)
+        
+        rtgs = torch.tensor(rtgs, dtype=torch.float32, device=device)
         
         return rtgs
+
 
 
     def rollout(self, batch_size):
@@ -84,7 +89,7 @@ class PPO:
         batch_action = []
         batch_next_state = []
         batch_log_action = []
-        batch_rtg = []
+        batch_mean_reward = []
 
         for batch in range(batch_size):
             state, _ = self.env.reset()
@@ -92,7 +97,7 @@ class PPO:
             
             # we do not directly save epoch reward, since we want the rewards-to-go for each timestep
             eps_reward = []
-            while not done:
+            for t in range(self.max_ts):
                 action, log_prob, dist = self.get_action(torch.as_tensor(state, dtype=torch.float32, device=device))
 
                 next_state, reward, terminated, truncated, _ = self.env.step(action)
@@ -109,26 +114,28 @@ class PPO:
                 if done:
                     break
             batch_reward.append(eps_reward)
-            batch_rtg.append(self.compute_rtg(eps_reward, discount_factor=self.discount_factor))
+            batch_mean_reward.append(np.mean(eps_reward))
             
-            # first convert to numpy array for batch_state
-            batch_state = np.array(batch_state)
-            batch_action = np.array(batch_action)
-            batch_next_state = np.array(batch_next_state)
-            batch_log_action = np.array(batch_log_action)
-            batch_rtg = np.array(batch_rtg)
-            batch_reward = np.array(batch_reward)
+        # first convert to numpy array for batch_state
+        batch_state = np.array(batch_state)
+        batch_action = np.array(batch_action)
+        batch_next_state = np.array(batch_next_state)
+        batch_log_action = np.array(batch_log_action)
+        
+        # print mean reward
+        print("Mean reward: ", np.mean(batch_mean_reward))
 
+        # convert to tensors
+        batch_rtg = self.compute_rtg(batch_reward, self.discount_factor)
+        batch_state = torch.tensor(batch_state, dtype=torch.float32, device=device)
+        batch_action = torch.tensor(batch_action, dtype=torch.float32, device=device)
+        batch_next_state = torch.tensor(batch_next_state, dtype=torch.float32, device=device)
+        batch_log_action = torch.tensor(batch_log_action, dtype=torch.float32, device=device)
+        # report reward to wandb
+        # wandb.log({"reward": batch_reward.mean()})
+        
 
-            # convert to tensors
-            batch_state = torch.tensor(batch_state, dtype=torch.float32, device=device)
-            batch_action = torch.tensor(batch_action, dtype=torch.float32, device=device)
-            batch_next_state = torch.tensor(batch_next_state, dtype=torch.float32, device=device)
-            batch_log_action = torch.tensor(batch_log_action, dtype=torch.float32, device=device)
-            batch_rtg = torch.as_tensor(batch_rtg, dtype=torch.float32, device=device)
-            batch_reward = torch.as_tensor(batch_reward, dtype=torch.float32, device=device)
-
-            return batch_state, batch_action, batch_log_action, batch_reward, batch_rtg, batch_next_state, dist
+        return batch_state, batch_action, batch_log_action, batch_rtg, batch_reward, batch_next_state
     
     def get_log_prob(self, batch_state, batch_action):
         """
@@ -141,55 +148,55 @@ class PPO:
         return log_probs
 
 
-    def learn(self, learn_steps, batch_size):
+    def learn(self, n_epochs, batch_size):
         t_steps = 0
-        while t_steps < learn_steps:
+        while t_steps < n_epochs:
             # rollout to take the data
             # the data is batched with number of samples = batch_size
             t_steps += 1
-            batch_state, batch_action, batch_log_action, batch_reward, batch_rtg, batch_next_state, dist = self.rollout(batch_size)
+            batch_state, batch_action, batch_log_action, batch_rtg, batch_reward, batch_next_state = self.rollout(batch_size)
 
             # compute advantage
             A_k = batch_rtg - self.critic(batch_state).squeeze()
 
             # normalize advantage
-            A_k = (A_k - A_k.mean()) / (A_k.std() + 1e-10)
+            A_k = (A_k - A_k.mean()) / (A_k.std(unbiased=False) + 1e-10)
+
+            A_k = A_k.detach()
 
             # compute the loss
             # actor loss
             # the new policy probability = taking the probs with current actor for the action considering
-            
-            # compute the log probability for current policy
-            current_log_action = self.get_log_prob(batch_state, batch_action)
-            
-            # the old log probability is calculated in rollout
-            # now we calculate the ratio
-            ratio = torch.exp(current_log_action - batch_log_action)
+            for _ in range(self.n_update_per_epoch):
+                # compute the log probability for current policy
+                current_log_action = self.get_log_prob(batch_state, batch_action)
+                
+                # the old log probability is calculated in rollout
+                # now we calculate the ratio
+                ratio = torch.exp(current_log_action - batch_log_action)
 
-            surrogate_loss = - torch.sum(A_k * torch.min(ratio, torch.clamp(ratio, 1 - self.epsilon, 1 + self.epsilon)))
+                surrogate_loss = - torch.sum(A_k * torch.min(ratio, torch.clamp(ratio, 1 - self.epsilon, 1 + self.epsilon)))
+                self.actor_optimizer.zero_grad()
+                surrogate_loss.backward()
+                self.actor_optimizer.step()
 
-            self.actor_optimizer.zero_grad()
-            surrogate_loss.backward()
-            self.actor_optimizer.step()
+                # critic loss
+                # calculate estimated value
+                #### BUGGGG
+                target_state_value = batch_reward.T + self.critic(batch_next_state) * self.discount_factor
+                current_state_value = self.critic(batch_state)
+                
+                # we use MSE loss
+                criterion = nn.MSELoss()
+                critic_loss = criterion(current_state_value, target_state_value.detach())
 
-            # critic loss
-            # calculate estimated value
-            target_state_value = batch_reward.T + self.critic(batch_next_state) * self.discount_factor
-            current_state_value = self.critic(batch_state)
-            
-            # we use MSE loss
-            criterion = nn.MSELoss()
-            critic_loss = criterion(current_state_value, target_state_value.detach())
+                self.critic_optimizer.zero_grad()
+                critic_loss.backward()
+                self.critic_optimizer.step()
 
-            self.critic_optimizer.zero_grad()
-            critic_loss.backward()
-            self.critic_optimizer.step()
-
-            wandb.log({"actor_loss": surrogate_loss, "critic_loss": critic_loss})
+            # wandb.log({"actor_loss": surrogate_loss, "critic_loss": critic_loss})
 
 
-    # evaluate training steps
-    
 
 
         
