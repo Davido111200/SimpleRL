@@ -1,0 +1,37 @@
+/usr/lib/python3/dist-packages/requests/__init__.py:89: RequestsDependencyWarning: urllib3 (1.26.16) or chardet (5.2.0) doesn't match a supported version!
+  warnings.warn("urllib3 ({}) or chardet ({}) doesn't match a supported "
+wandb: ERROR api_key not configured (no-tty). call wandb.login(key=[your_api_key])
+Traceback (most recent call last):
+  File "main.py", line 49, in <module>
+    main(args.n_epochs, args.max_timesteps, args.n_trials, args.env_name, args.epsilon, args.batch_size)
+  File "main.py", line 32, in main
+    wandb.init(project="PPO")
+  File "/home/s223540177/.local/lib/python3.8/site-packages/wandb/sdk/wandb_init.py", line 1183, in init
+    raise e
+  File "/home/s223540177/.local/lib/python3.8/site-packages/wandb/sdk/wandb_init.py", line 1160, in init
+    wi.setup(kwargs)
+  File "/home/s223540177/.local/lib/python3.8/site-packages/wandb/sdk/wandb_init.py", line 306, in setup
+    wandb_login._login(
+  File "/home/s223540177/.local/lib/python3.8/site-packages/wandb/sdk/wandb_login.py", line 298, in _login
+    wlogin.prompt_api_key()
+  File "/home/s223540177/.local/lib/python3.8/site-packages/wandb/sdk/wandb_login.py", line 228, in prompt_api_key
+    raise UsageError("api_key not configured (no-tty). call " + directive)
+wandb.errors.UsageError: api_key not configured (no-tty). call wandb.login(key=[your_api_key])
+Traceback (most recent call last):
+  File "main.py", line 49, in <module>
+    main(args.n_epochs, args.max_timesteps, args.n_trials, args.env_name, args.epsilon, args.batch_size)
+  File "main.py", line 32, in main
+    wandb.init(project="PPO")
+  File "/home/s223540177/.local/lib/python3.8/site-packages/wandb/sdk/wandb_init.py", line 1183, in init
+    raise e
+  File "/home/s223540177/.local/lib/python3.8/site-packages/wandb/sdk/wandb_init.py", line 1160, in init
+    wi.setup(kwargs)
+  File "/home/s223540177/.local/lib/python3.8/site-packages/wandb/sdk/wandb_init.py", line 306, in setup
+    wandb_login._login(
+  File "/home/s223540177/.local/lib/python3.8/site-packages/wandb/sdk/wandb_login.py", line 298, in _login
+    wlogin.prompt_api_key()
+  File "/home/s223540177/.local/lib/python3.8/site-packages/wandb/sdk/wandb_login.py", line 228, in prompt_api_key
+    raise UsageError("api_key not configured (no-tty). call " + directive)
+wandb.errors.UsageError: api_key not configured (no-tty). call wandb.login(key=[your_api_key])
+/usr/lib/python3/dist-packages/requests/__init__.py:89: RequestsDependencyWarning: urllib3 (1.26.16) or chardet (5.2.0) doesn't match a supported version!
+  warnings.warn("urllib3 ({}) or chardet ({}) doesn't match a supported "
