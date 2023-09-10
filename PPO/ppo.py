@@ -15,24 +15,48 @@ import wandb
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
-class Neural_net(nn.Module):
-    "Simple policy and value function"
-    def __init__(self, n_inputs, n_outputs):
-        super(Neural_net, self).__init__()
-        self.fc1 = nn.Linear(n_inputs, 128, device=device, dtype=torch.float32)
-        self.fc2 = nn.Linear(128, n_outputs, device=device, dtype=torch.float32)
+class Actor(nn.Module):
+    def __init__(self, n_state, n_action) -> None:
+        super(Actor, self).__init__()
+        self.fc1 = nn.Linear(n_state, 128)
+        self.fc2 = nn.Linear(128, 128)
+        self.fc3 = nn.Linear(128, 64)
+        self.fc4 = nn.Linear(64, n_action)
 
     def forward(self, x):
-        x = F.relu(self.fc1(x))
-        x = F.relu(self.fc2(x))
+        x = F.tanh(self.fc1(x))
+        x = F.tanh(self.fc2(x))
+        x = F.tanh(self.fc3(x))
+        x = self.fc4(x)
+        return x
+
+class Critic(nn.Module):
+    def __init__(self, n_state) -> None:
+        super(Critic, self).__init__()
+        self.fc1 = nn.Linear(n_state, 128)
+        self.fc2 = nn.Linear(128, 128)
+        self.fc3 = nn.Linear(128, 64)
+        self.fc4 = nn.Linear(64, 1)
+
+    def forward(self, x):
+        x = F.tanh(self.fc1(x))
+        x = F.tanh(self.fc2(x))
+        x = F.tanh(self.fc3(x))
+        x = self.fc4(x)
         return x
 
 class PPO:
     def __init__(self, env, batch_size, epsilon) -> None:
-        self.actor = Neural_net(env.observation_space.shape[0], env.action_space.shape[0]).to(device)
-        self.critic = Neural_net(env.observation_space.shape[0], 1).to(device)
+        self.actor = Actor(env.observation_space.shape[0], env.action_space.shape[0]).to(device)
+        self.critic = Critic(env.observation_space.shape[0]).to(device)
         self.actor_optimizer = optim.Adam(self.actor.parameters(), lr=3e-4)
         self.critic_optimizer = optim.Adam(self.critic.parameters(), lr=3e-4)
+
+        # hyperparameters
+        # ent_coef: entropy coefficient for joint loss calculation
+        # vf_coef: value function coefficient for joint loss calculation
+        self.ent_coef = 0.01
+        self.vf_coef = 0.5
 
         self.env = env 
         self.discount_factor = 0.99
@@ -40,6 +64,7 @@ class PPO:
         self.epsilon = epsilon
         self.n_update_per_epoch = 10
         self.max_ts = 1000000
+
         # initialize the covanriance matrix used to query the actor for actions
         self.cov_var = torch.full(size=(env.action_space.shape[0],), fill_value=0.5)
         self.cov_mat = torch.diag(self.cov_var).to(device)
@@ -58,7 +83,9 @@ class PPO:
 
         log_prob = dist.log_prob(action)
 
-        return action.detach().numpy(), log_prob.detach(), dist
+        entropy = dist.entropy().mean()
+
+        return action.detach().numpy(), log_prob.detach(), entropy
 
     def compute_rtg(self, rewards, discount_factor):
         """
@@ -69,7 +96,7 @@ class PPO:
         
         for ep_rew in reversed(rewards):
             discounted_reward = 0  # Initialize with a float
-            print(ep_rew)
+
             for rew in reversed(ep_rew):
                 discounted_reward = rew + discount_factor * discounted_reward
                 rtgs.insert(0, discounted_reward)
@@ -90,6 +117,8 @@ class PPO:
         batch_next_state = []
         batch_log_action = []
         batch_mean_reward = []
+        batch_raw_reward = []
+        batch_entropy = []
 
         for batch in range(batch_size):
             state, _ = self.env.reset()
@@ -98,15 +127,17 @@ class PPO:
             # we do not directly save epoch reward, since we want the rewards-to-go for each timestep
             eps_reward = []
             for t in range(self.max_ts):
-                action, log_prob, dist = self.get_action(torch.as_tensor(state, dtype=torch.float32, device=device))
+                action, log_prob, entropy = self.get_action(torch.as_tensor(state, dtype=torch.float32, device=device))
 
                 next_state, reward, terminated, truncated, _ = self.env.step(action)
 
                 batch_state.append(state)
                 eps_reward.append(reward)
+                batch_raw_reward.append(reward)
                 batch_action.append(action)
                 batch_next_state.append(next_state)
                 batch_log_action.append(log_prob)
+                batch_entropy.append(entropy)
 
                 done = terminated or truncated
 
@@ -121,9 +152,12 @@ class PPO:
         batch_action = np.array(batch_action)
         batch_next_state = np.array(batch_next_state)
         batch_log_action = np.array(batch_log_action)
+        batch_raw_reward = np.array(batch_raw_reward)
+        batch_entropy = np.array(batch_entropy)
         
-        # print mean reward
+        # track the average return
         print("Mean reward: ", np.mean(batch_mean_reward))
+        wandb.log({"mean_reward": np.mean(batch_mean_reward)})
 
         # convert to tensors
         batch_rtg = self.compute_rtg(batch_reward, self.discount_factor)
@@ -131,11 +165,11 @@ class PPO:
         batch_action = torch.tensor(batch_action, dtype=torch.float32, device=device)
         batch_next_state = torch.tensor(batch_next_state, dtype=torch.float32, device=device)
         batch_log_action = torch.tensor(batch_log_action, dtype=torch.float32, device=device)
-        # report reward to wandb
-        # wandb.log({"reward": batch_reward.mean()})
+        batch_raw_reward = torch.tensor(batch_raw_reward, dtype=torch.float32, device=device)
+        batch_entropy = torch.tensor(batch_entropy, dtype=torch.float32, device=device)
         
 
-        return batch_state, batch_action, batch_log_action, batch_rtg, batch_reward, batch_next_state
+        return batch_state, batch_action, batch_log_action, batch_rtg, batch_next_state, batch_raw_reward, batch_entropy, batch_mean_reward
     
     def get_log_prob(self, batch_state, batch_action):
         """
@@ -149,12 +183,16 @@ class PPO:
 
 
     def learn(self, n_epochs, batch_size):
-        t_steps = 0
-        while t_steps < n_epochs:
+        trial_reward = []
+        for epoch in range(n_epochs):
             # rollout to take the data
             # the data is batched with number of samples = batch_size
-            t_steps += 1
-            batch_state, batch_action, batch_log_action, batch_rtg, batch_reward, batch_next_state = self.rollout(batch_size)
+            batch_state, batch_action, batch_log_action, batch_rtg, batch_next_state, batch_raw_reward, batch_entropy, batch_mean_reward = self.rollout(batch_size)
+            
+            assert len(batch_state) == len(batch_action) == len(batch_log_action) == len(batch_rtg) == len(batch_next_state) == len(batch_raw_reward), "Batch data must have the same length"
+
+            # get the mean reward
+            trial_reward.append(np.mean(batch_mean_reward))
 
             # compute advantage
             A_k = batch_rtg - self.critic(batch_state).squeeze()
@@ -175,28 +213,38 @@ class PPO:
                 # now we calculate the ratio
                 ratio = torch.exp(current_log_action - batch_log_action)
 
-                surrogate_loss = - torch.sum(A_k * torch.min(ratio, torch.clamp(ratio, 1 - self.epsilon, 1 + self.epsilon)))
-                self.actor_optimizer.zero_grad()
-                surrogate_loss.backward()
-                self.actor_optimizer.step()
+                surrogate_loss_1 = ratio * A_k
+                surrogate_loss_2 = torch.clamp(ratio, 1 - self.epsilon, 1 + self.epsilon) * A_k
+
+                surrogate_loss = - torch.min(surrogate_loss_1, surrogate_loss_2).mean()
+                # self.actor_optimizer.zero_grad()
+                # surrogate_loss.backward()
+                # self.actor_optimizer.step()
 
                 # critic loss
                 # calculate estimated value
-                #### BUGGGG
-                target_state_value = batch_reward.T + self.critic(batch_next_state) * self.discount_factor
+                target_state_value = batch_raw_reward.unsqueeze(1) + self.critic(batch_next_state) * self.discount_factor
                 current_state_value = self.critic(batch_state)
                 
                 # we use MSE loss
                 criterion = nn.MSELoss()
                 critic_loss = criterion(current_state_value, target_state_value.detach())
 
-                self.critic_optimizer.zero_grad()
-                critic_loss.backward()
-                self.critic_optimizer.step()
+                # self.critic_optimizer.zero_grad()
+                # critic_loss.backward()
+                # self.critic_optimizer.step()
 
-            # wandb.log({"actor_loss": surrogate_loss, "critic_loss": critic_loss})
+                loss = surrogate_loss + self.ent_coef * batch_entropy.mean() + self.vf_coef * critic_loss
+
+                self.actor_optimizer.zero_grad()
+                loss.backward()
+                # Clip gradient norms
+                torch.nn.utils.clip_grad_norm_(self.actor.parameters(), max_norm=0.5)
+                self.actor_optimizer.step()
 
 
+            wandb.log({"actor_loss": surrogate_loss, "critic_loss": critic_loss})
+        return trial_reward
 
 
         
