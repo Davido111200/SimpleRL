@@ -10,6 +10,7 @@ import matplotlib.pyplot as plt
 import argparse
 from collections import namedtuple
 
+
 from torch.distributions import Categorical
 import wandb  
 
@@ -79,13 +80,13 @@ class PPO:
 
         dist = distributions.MultivariateNormal(loc=mean, covariance_matrix=self.cov_mat)
 
-        action = dist.sample()
+        action = dist.sample().to(device)
 
         log_prob = dist.log_prob(action)
 
         entropy = dist.entropy().mean()
 
-        return action.detach().numpy(), log_prob.detach(), entropy
+        return action.detach().cpu().numpy(), log_prob.detach().cpu().numpy(), entropy.cpu().numpy()
 
     def compute_rtg(self, rewards, discount_factor):
         """
@@ -121,7 +122,7 @@ class PPO:
         batch_entropy = []
 
         for batch in range(batch_size):
-            state, _ = self.env.reset()
+            state = self.env.reset()
             done = False
             
             # we do not directly save epoch reward, since we want the rewards-to-go for each timestep
