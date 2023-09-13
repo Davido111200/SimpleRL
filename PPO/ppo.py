@@ -9,12 +9,13 @@ import numpy as np
 import matplotlib.pyplot as plt
 import argparse
 from collections import namedtuple
-
+from stable_baselines3.common.buffers import RolloutBuffer
 
 from torch.distributions import Categorical
 import wandb  
 
-device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+# device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+device = torch.device('cpu')
 
 class Actor(nn.Module):
     def __init__(self, n_state, n_action) -> None:
@@ -47,7 +48,7 @@ class Critic(nn.Module):
         return x
 
 class PPO:
-    def __init__(self, env, batch_size, epsilon) -> None:
+    def __init__(self, env, batch_size, epsilon, n_envs) -> None:
         self.actor = Actor(env.observation_space.shape[0], env.action_space.shape[0]).to(device)
         self.critic = Critic(env.observation_space.shape[0]).to(device)
         self.actor_optimizer = optim.Adam(self.actor.parameters(), lr=3e-4)
@@ -56,15 +57,22 @@ class PPO:
         # hyperparameters
         # ent_coef: entropy coefficient for joint loss calculation
         # vf_coef: value function coefficient for joint loss calculation
-        self.ent_coef = 0.01
+        self.ent_coef = 0
         self.vf_coef = 0.5
 
         self.env = env 
         self.discount_factor = 0.99
         self.batch_size = batch_size
         self.epsilon = epsilon
-        self.n_update_per_epoch = 10
-        self.max_ts = 1000000
+        self.n_update_per_epoch = 50
+        self.n_step = 1024
+        self.n_envs = n_envs
+
+        # init the rollout buffer
+        self.rollout_buffer = RolloutBuffer(self.batch_size * self.n_envs, self.env.observation_space, self.env.action_space, device=device, n_envs=self.n_envs,
+                                            gamma=self.discount_factor)
+        self.rollout_buffer_size = self.batch_size * self.n_envs
+        self.rollout_buffer.entropy =np.zeros((self.rollout_buffer_size, self.n_envs), dtype=np.float32)
 
         # initialize the covanriance matrix used to query the actor for actions
         self.cov_var = torch.full(size=(env.action_space.shape[0],), fill_value=0.5)
@@ -78,6 +86,8 @@ class PPO:
         """
         mean = self.actor(state)
 
+        state_value = self.critic(state)
+
         dist = distributions.MultivariateNormal(loc=mean, covariance_matrix=self.cov_mat)
 
         action = dist.sample().to(device)
@@ -86,7 +96,7 @@ class PPO:
 
         entropy = dist.entropy().mean()
 
-        return action.detach().cpu().numpy(), log_prob.detach().cpu().numpy(), entropy.cpu().numpy()
+        return action.detach().cpu().numpy(), log_prob.detach(), entropy.cpu().numpy(), state_value
 
     def compute_rtg(self, rewards, discount_factor):
         """
@@ -106,146 +116,119 @@ class PPO:
         
         return rtgs
 
+    def evaluate_actions(self, states, actions):
+        V = self.critic(states)
 
+        mean = self.actor(states)
+        dist = distributions.MultivariateNormal(mean, self.cov_mat)
+        log_probs = dist.log_prob(actions)
 
-    def rollout(self, batch_size):
+        return V, log_probs
+
+    def sample_with_indices(self, batch_size: int, env=None):
         """
-        Get the batch data
+        Sample the buffer and return both the sampled data and their corresponding indices.
+        :param batch_size: Number of elements to sample
+        :param env: Associated gym VecEnv to normalize observations/rewards when sampling
+        :return: Tuple containing (batch_indices, batch_states, batch_actions, batch_values, batch_log_probs,
+                batch_advantages, batch_returns)
         """
-        batch_state = []
-        batch_reward = []
-        batch_action = []
-        batch_next_state = []
-        batch_log_action = []
-        batch_mean_reward = []
-        batch_raw_reward = []
-        batch_entropy = []
+        upper_bound = self.rollout_buffer_size if self.rollout_buffer.full else self.rollout_buffer.pos
+        batch_indices = np.random.randint(0, upper_bound, size=batch_size)
+        batch_data = self.rollout_buffer._get_samples(batch_indices, env=env)
 
-        for batch in range(batch_size):
-            state = self.env.reset()
-            done = False
+        return batch_indices, batch_data
+
+    def rollout(self):
+        """
+        Get the batch data from self.rollout_buffer
+        """
+
+        # reset the rollout buffer
+        self.rollout_buffer.reset()
+        n_data = 0
+
+        state = self.env.reset()
+        dones = [False] * self.n_envs
+
+        state = torch.as_tensor(state, dtype=torch.float32, device=device)
+
+        for step in range(self.n_step):
+            action, log_prob, entropy, state_value = self.get_action(state)
+
+            next_state, reward, dones, infos = self.env.step(action)
+            next_state = torch.as_tensor(next_state, dtype=torch.float32, device=device)
+            self.rollout_buffer.compute_returns_and_advantage(last_values=state_value.detach(), dones=dones)
+            self.rollout_buffer.add(obs=state, action=action, reward=reward, episode_start=dones, log_prob=log_prob,
+                                    value=state_value.detach())
             
-            # we do not directly save epoch reward, since we want the rewards-to-go for each timestep
-            eps_reward = []
-            for t in range(self.max_ts):
-                action, log_prob, entropy = self.get_action(torch.as_tensor(state, dtype=torch.float32, device=device))
+            state = next_state
 
-                next_state, reward, terminated, truncated, _ = self.env.step(action)
-
-                batch_state.append(state)
-                eps_reward.append(reward)
-                batch_raw_reward.append(reward)
-                batch_action.append(action)
-                batch_next_state.append(next_state)
-                batch_log_action.append(log_prob)
-                batch_entropy.append(entropy)
-
-                done = terminated or truncated
-
-                state = next_state
+            for idx, done in enumerate(dones):
                 if done:
-                    break
-            batch_reward.append(eps_reward)
-            batch_mean_reward.append(np.mean(eps_reward))
-            
-        # first convert to numpy array for batch_state
-        batch_state = np.array(batch_state)
-        batch_action = np.array(batch_action)
-        batch_next_state = np.array(batch_next_state)
-        batch_log_action = np.array(batch_log_action)
-        batch_raw_reward = np.array(batch_raw_reward)
-        batch_entropy = np.array(batch_entropy)
-        
-        # track the average return
-        print("Mean reward: ", np.mean(batch_mean_reward))
-        wandb.log({"mean_reward": np.mean(batch_mean_reward)})
+                    # reset the state of that agent
+                    state[idx] = torch.from_numpy(self.env.reset()[idx]).float().to(device)
+                    dones[idx] = False
+                            
+        batch_states, batch_actions, batch_values, batch_log_probs, batch_advantages, batch_returns = self.rollout_buffer.sample(batch_size=self.n_step, env=self.env)
 
-        # convert to tensors
-        batch_rtg = self.compute_rtg(batch_reward, self.discount_factor)
-        batch_state = torch.tensor(batch_state, dtype=torch.float32, device=device)
-        batch_action = torch.tensor(batch_action, dtype=torch.float32, device=device)
-        batch_next_state = torch.tensor(batch_next_state, dtype=torch.float32, device=device)
-        batch_log_action = torch.tensor(batch_log_action, dtype=torch.float32, device=device)
-        batch_raw_reward = torch.tensor(batch_raw_reward, dtype=torch.float32, device=device)
-        batch_entropy = torch.tensor(batch_entropy, dtype=torch.float32, device=device)
-        
+        # keep track of the rewards and report to wandb
+        wandb.log({"reward": torch.mean(batch_returns).item()})
 
-        return batch_state, batch_action, batch_log_action, batch_rtg, batch_next_state, batch_raw_reward, batch_entropy, batch_mean_reward
-    
-    def get_log_prob(self, batch_state, batch_action):
-        """
-        Compute the log prob of current data batch
-        """
-        mean = self.actor(batch_state)
-        dist = torch.distributions.MultivariateNormal(mean, self.cov_mat)
-        log_probs = dist.log_prob(batch_action)
+        return batch_states, batch_actions, batch_values, batch_log_probs, batch_advantages, batch_returns
 
-        return log_probs
-
-
-    def learn(self, n_epochs, batch_size):
-        trial_reward = []
-        for epoch in range(n_epochs):
+    def learn(self, n_epochs):
+        t_so_far = 0
+        while t_so_far < n_epochs:
             # rollout to take the data
-            # the data is batched with number of samples = batch_size
-            batch_state, batch_action, batch_log_action, batch_rtg, batch_next_state, batch_raw_reward, batch_entropy, batch_mean_reward = self.rollout(batch_size)
+            batch_states, batch_actions, batch_values, batch_log_probs, batch_advantages, batch_returns = self.rollout()
             
-            assert len(batch_state) == len(batch_action) == len(batch_log_action) == len(batch_rtg) == len(batch_next_state) == len(batch_raw_reward), "Batch data must have the same length"
-
-            # get the mean reward
-            trial_reward.append(np.mean(batch_mean_reward))
+            t_so_far += len(batch_returns)
+            
+            # log t_so_far to wandb
+            wandb.log({"t_so_far": t_so_far})
 
             # compute advantage
-            A_k = batch_rtg - self.critic(batch_state).squeeze()
+            A_k = batch_advantages
 
             # normalize advantage
             A_k = (A_k - A_k.mean()) / (A_k.std(unbiased=False) + 1e-10)
 
-            A_k = A_k.detach()
-
             # compute the loss
             # actor loss
             # the new policy probability = taking the probs with current actor for the action considering
-            for _ in range(self.n_update_per_epoch):
-                # compute the log probability for current policy
-                current_log_action = self.get_log_prob(batch_state, batch_action)
-                
+            # compute the log probability for current policy
+            for learning_step in range(self.n_update_per_epoch):
+                V, current_log_action = self.evaluate_actions(batch_states, batch_actions)
+
                 # the old log probability is calculated in rollout
                 # now we calculate the ratio
-                ratio = torch.exp(current_log_action - batch_log_action)
+                ratio = torch.exp(current_log_action.view(len(batch_log_probs)) - batch_log_probs)
 
                 surrogate_loss_1 = ratio * A_k
                 surrogate_loss_2 = torch.clamp(ratio, 1 - self.epsilon, 1 + self.epsilon) * A_k
 
-                surrogate_loss = - torch.min(surrogate_loss_1, surrogate_loss_2).mean()
+                surrogate_loss = (- torch.min(surrogate_loss_1, surrogate_loss_2)).mean()
                 # self.actor_optimizer.zero_grad()
                 # surrogate_loss.backward()
                 # self.actor_optimizer.step()
 
-                # critic loss
-                # calculate estimated value
-                target_state_value = batch_raw_reward.unsqueeze(1) + self.critic(batch_next_state) * self.discount_factor
-                current_state_value = self.critic(batch_state)
-                
-                # we use MSE loss
-                criterion = nn.MSELoss()
-                critic_loss = criterion(current_state_value, target_state_value.detach())
-
-                # self.critic_optimizer.zero_grad()
-                # critic_loss.backward()
-                # self.critic_optimizer.step()
-
-                loss = surrogate_loss + self.ent_coef * batch_entropy.mean() + self.vf_coef * critic_loss
+                critic_loss = nn.MSELoss()(V.flatten(), batch_advantages + batch_values)
+                actor_loss = surrogate_loss
 
                 self.actor_optimizer.zero_grad()
-                loss.backward()
+                actor_loss.backward(retain_graph=True)
                 # Clip gradient norms
-                torch.nn.utils.clip_grad_norm_(self.actor.parameters(), max_norm=0.5)
+                # torch.nn.utils.clip_grad_norm_(self.actor.parameters(), max_norm=0.5)
                 self.actor_optimizer.step()
 
+                self.critic_optimizer.zero_grad()
+                critic_loss.backward()
+                # torch.nn.utils.clip_grad_norm_(self.critic.parameters(), max_norm=0.5)
+                self.critic_optimizer.step()
 
-            wandb.log({"actor_loss": surrogate_loss, "critic_loss": critic_loss})
-        return trial_reward
+
+                wandb.log({"actor_loss": surrogate_loss, "critic_loss": critic_loss})
 
 
         
