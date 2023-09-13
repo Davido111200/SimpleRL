@@ -51,8 +51,8 @@ class PPO:
     def __init__(self, env, batch_size, epsilon, n_envs) -> None:
         self.actor = Actor(env.observation_space.shape[0], env.action_space.shape[0]).to(device)
         self.critic = Critic(env.observation_space.shape[0]).to(device)
-        self.actor_optimizer = optim.Adam(self.actor.parameters(), lr=3e-4)
-        self.critic_optimizer = optim.Adam(self.critic.parameters(), lr=3e-4)
+        self.actor_optimizer = optim.Adam(self.actor.parameters(), lr=0.005)
+        self.critic_optimizer = optim.Adam(self.critic.parameters(), lr=0.005)
 
         # hyperparameters
         # ent_coef: entropy coefficient for joint loss calculation
@@ -61,12 +61,12 @@ class PPO:
         self.vf_coef = 0.5
 
         self.env = env 
-        self.discount_factor = 0.99
+        self.n_envs = n_envs
+        self.discount_factor = 0.95
         self.batch_size = batch_size
         self.epsilon = epsilon
-        self.n_update_per_epoch = 10
-        self.n_step = 1024
-        self.n_envs = n_envs
+        self.n_update_per_epoch = 5
+        self.n_step = self.batch_size * self.n_envs
 
         # init the rollout buffer
         self.rollout_buffer = RolloutBuffer(self.batch_size * self.n_envs, self.env.observation_space, self.env.action_space, device=device, n_envs=self.n_envs,
@@ -151,7 +151,7 @@ class PPO:
         dones = [False] * self.n_envs
 
         state = torch.as_tensor(state, dtype=torch.float32, device=device)
-
+        rews = []
         for step in range(self.n_step):
             action, log_prob, entropy, state_value = self.get_action(state)
 
@@ -162,12 +162,7 @@ class PPO:
                                     value=state_value.detach())
             
             state = next_state
-
-            for idx, done in enumerate(dones):
-                if done:
-                    # reset the state of that agent
-                    state[idx] = torch.from_numpy(self.env.reset()[idx]).float().to(device)
-                    dones[idx] = False
+            
                             
         batch_states, batch_actions, batch_values, batch_log_probs, batch_advantages, batch_returns = self.rollout_buffer.sample(batch_size=self.n_step, env=self.env)
 

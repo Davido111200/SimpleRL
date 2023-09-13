@@ -8,11 +8,13 @@
 
 cd ~/dai/SimpleRL/PPO
 
-n_epochs=1000
-max_timesteps=1000
+n_epochs=1000000
+n_cpu=4
 n_trials=3
-env_name="Pendulum-v1"
+env_name='Hopper-v4'
 epsilon=0.2
 batch_size=64
 
-python3 main.py --n_epochs "$n_epochs" --max_timesteps "$max_timesteps" --n_trials "$n_trials" --env_name "$env_name" --epsilon "$epsilon" --batch_size "$batch_size"
+python3 main.py --n_epochs $n_epochs --n_cpu $n_cpu --n_trials $n_trials --env_name $env_name --epsilon $epsilon --batch_size $batch_size
+
+
