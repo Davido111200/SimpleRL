@@ -64,7 +64,7 @@ class PPO:
         self.discount_factor = 0.99
         self.batch_size = batch_size
         self.epsilon = epsilon
-        self.n_update_per_epoch = 50
+        self.n_update_per_epoch = 10
         self.n_step = 1024
         self.n_envs = n_envs
 
@@ -146,7 +146,6 @@ class PPO:
 
         # reset the rollout buffer
         self.rollout_buffer.reset()
-        n_data = 0
 
         state = self.env.reset()
         dones = [False] * self.n_envs
