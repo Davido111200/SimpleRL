@@ -9,7 +9,7 @@
 cd ~/dai/SimpleRL/PPO
 source ppo/bin/activate
 
-n_epochs=90000000
+n_epochs=4000000000
 n_envs=16
 epsilon=0.2
 env_name='Walker2d-v4'

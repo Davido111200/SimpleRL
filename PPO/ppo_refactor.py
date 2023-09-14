@@ -56,7 +56,7 @@ class PPO():
         super().__init__()
         self.env = make_vec_env(env_name, n_envs=n_envs)
         self.actor_critic = ActorCritic(self.env.observation_space.shape[0], self.env.action_space.shape[0]).to(device)
-        self.optimizer = optim.Adam(self.actor_critic.parameters(), lr=0.005)
+        self.optimizer = optim.Adam(self.actor_critic.parameters(), lr=1e-5)
         self.n_step_per_batch = n_step_per_batch
         self.n_actors = n_envs
         self.n_epochs = n_epochs
@@ -64,7 +64,6 @@ class PPO():
         self.update_epochs = 4 # the k-epoch 
         self.n_updates = self.n_epochs // self.batch_size
         self.cur_highest_reward = -1000000
-        self.temp_rew = deque([], max_len=1000)
 
         # hyperparameters
         self.lambd = 0.95
@@ -123,7 +122,6 @@ class PPO():
         wandb.log({"reward": np.mean(np.array(rews))})
         # finished collecting T samples for each agent
         # save the reward to self.temp_rew
-        self.temp_rew.append(np.mean(np.array(rews)))
 
         with torch.no_grad():
             next_state_values = self.actor_critic.get_value(torch.from_numpy(next_states).float().to(device)).reshape(1, -1)
@@ -161,6 +159,7 @@ class PPO():
             # collect batch data
             b_states, b_actions, b_log_probs, b_advantages, b_returns, b_values = self.rollout()
 
+
             for update_epoch in range(self.update_epochs):
                 np.random.shuffle(b_indicies)
                 for start in range(0, self.batch_size, mini_batch_size):
@@ -176,7 +175,6 @@ class PPO():
 
                     # calculate the ratio
                     ratio = torch.exp(current_log_probs - b_log_probs[mb_inds])
-
                     # calculate the surrogate loss
                     surrogate_loss_1 = ratio * mb_advantages
                     surrogate_loss_2 = torch.clamp(ratio, 1 - self.epsilon, 1 + self.epsilon) * mb_advantages
@@ -198,9 +196,6 @@ class PPO():
                     wandb.log({"loss": loss.item()})
                     wandb.log({"surrogate_loss": surrogate_loss.item()})
                     wandb.log({"value_loss": value_loss.item()})
-
-
-
 
 
 
