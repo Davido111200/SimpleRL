@@ -8,7 +8,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import argparse
 from collections import namedtuple
-from ppo_refactor import PPO
+from ppo import PPO
 
 from stable_baselines3.common.vec_env import SubprocVecEnv
 from stable_baselines3.common.utils import set_random_seed

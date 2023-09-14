@@ -8,222 +8,197 @@ import gymnasium as gym
 import numpy as np
 import matplotlib.pyplot as plt
 import argparse
-from collections import namedtuple
+from collections import namedtuple, deque
 from stable_baselines3.common.buffers import RolloutBuffer
+from stable_baselines3.common.env_util import make_vec_env
+
 
 from torch.distributions import Categorical
 import wandb  
 
-device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-# device = torch.device('cpu')
+# device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+device = torch.device('cpu')
 
-class Actor(nn.Module):
-    def __init__(self, n_state, n_action) -> None:
-        super(Actor, self).__init__()
-        self.fc1 = nn.Linear(n_state, 128)
-        self.fc2 = nn.Linear(128, 128)
-        self.fc3 = nn.Linear(128, 64)
-        self.fc4 = nn.Linear(64, n_action)
+class ActorCritic(nn.Module):
+    def __init__(self, n_inputs, n_outputs):
+        super(ActorCritic, self).__init__()
+        self.actor = nn.Sequential(
+            nn.Linear(n_inputs, 64),
+            nn.Tanh(),
+            nn.Linear(64, 32),
+            nn.Tanh(),
+            nn.Linear(32, n_outputs)
+        )
+        self.critic = nn.Sequential(
+            nn.Linear(n_inputs, 64),
+            nn.Tanh(),
+            nn.Linear(64, 32),
+            nn.Tanh(),
+            nn.Linear(32, 1)
+        )
+    
+    def get_value(self, x):
+        return self.critic(x)
+    
+    def get_action_and_probs_and_values(self, env, x, action=None):
+        mean = self.actor(x)
 
-    def forward(self, x):
-        x = F.tanh(self.fc1(x))
-        x = F.tanh(self.fc2(x))
-        x = F.tanh(self.fc3(x))
-        x = self.fc4(x)
-        return x
-
-class Critic(nn.Module):
-    def __init__(self, n_state) -> None:
-        super(Critic, self).__init__()
-        self.fc1 = nn.Linear(n_state, 128)
-        self.fc2 = nn.Linear(128, 128)
-        self.fc3 = nn.Linear(128, 64)
-        self.fc4 = nn.Linear(64, 1)
-
-    def forward(self, x):
-        x = F.tanh(self.fc1(x))
-        x = F.tanh(self.fc2(x))
-        x = F.tanh(self.fc3(x))
-        x = self.fc4(x)
-        return x
-
-class PPO:
-    def __init__(self, env, batch_size, epsilon, n_envs) -> None:
-        self.actor = Actor(env.observation_space.shape[0], env.action_space.shape[0]).to(device)
-        self.critic = Critic(env.observation_space.shape[0]).to(device)
-        self.actor_optimizer = optim.Adam(self.actor.parameters(), lr=0.005)
-        self.critic_optimizer = optim.Adam(self.critic.parameters(), lr=0.005)
+        cov_var = torch.full(size=(env.action_space.shape[0],), fill_value=0.5).to(device)
+        cov_mat = torch.diag(cov_var).to(device)
+        probs = distributions.MultivariateNormal(loc=mean, covariance_matrix=cov_mat.to(device))
+        if action is None:
+            action = probs.sample()
+        values = self.critic(x)
+        return action.detach().cpu().numpy(), probs.log_prob(action), probs.entropy(), values
+    
+class PPO():
+    def __init__(self, n_epochs, env_name, n_envs, n_step_per_batch, batch_size, epsilon, vf_coef, ent_coef) -> None:
+        super().__init__()
+        self.env = make_vec_env(env_name, n_envs=n_envs)
+        self.actor_critic = ActorCritic(self.env.observation_space.shape[0], self.env.action_space.shape[0]).to(device)
+        self.optimizer = optim.Adam(self.actor_critic.parameters(), lr=1e-5)
+        self.n_step_per_batch = n_step_per_batch
+        self.n_actors = n_envs
+        self.n_epochs = n_epochs
+        self.batch_size = int(n_envs * self.n_step_per_batch)
+        self.update_epochs = 4 # the k-epoch 
+        self.n_updates = self.n_epochs // self.batch_size
+        self.cur_highest_reward = -1000000
 
         # hyperparameters
-        # ent_coef: entropy coefficient for joint loss calculation
-        # vf_coef: value function coefficient for joint loss calculation
-        self.ent_coef = 0
-        self.vf_coef = 0.5
-
-        self.env = env 
-        self.n_envs = n_envs
-        self.discount_factor = 0.95
-        self.batch_size = batch_size
+        self.lambd = 0.95
+        self.gamma = 0.99
         self.epsilon = epsilon
-        self.n_update_per_epoch = 5
-        self.n_step = self.batch_size * self.n_envs
+        self.vf_coef = vf_coef
+        self.ent_coef = ent_coef
 
-        # init the rollout buffer
-        self.rollout_buffer = RolloutBuffer(self.batch_size * self.n_envs, self.env.observation_space, self.env.action_space, device=device, n_envs=self.n_envs,
-                                            gamma=self.discount_factor)
-        self.rollout_buffer_size = self.batch_size * self.n_envs
-        self.rollout_buffer.entropy =np.zeros((self.rollout_buffer_size, self.n_envs), dtype=np.float32)
+        # storage setup
+        self.states = torch.zeros((self.n_step_per_batch, n_envs, self.env.observation_space.shape[0])).to(device)
+        self.actions = torch.zeros((self.n_step_per_batch, n_envs, self.env.action_space.shape[0])).to(device)
+        self.log_probs = torch.zeros((self.n_step_per_batch, n_envs)).to(device)
+        self.dones = torch.zeros((self.n_step_per_batch, n_envs)).to(device)
+        self.values = torch.zeros((self.n_step_per_batch, n_envs)).to(device)
+        self.rewards = torch.zeros((self.n_step_per_batch, n_envs)).to(device)
 
-        # initialize the covanriance matrix used to query the actor for actions
-        self.cov_var = torch.full(size=(env.action_space.shape[0],), fill_value=0.5)
-        self.cov_mat = torch.diag(self.cov_var).to(device)
-
-    def get_action(self, state):
-        """
-        Return action, by sample from distribution with:
-        mean    : (n_action,)
-        variance: predefined above 
-        """
-        mean = self.actor(state)
-
-        state_value = self.critic(state)
-
-        dist = distributions.MultivariateNormal(loc=mean, covariance_matrix=self.cov_mat)
-
-        action = dist.sample().to(device)
-
-        log_prob = dist.log_prob(action)
-
-        entropy = dist.entropy().mean()
-
-        return action.detach().cpu().numpy(), log_prob.detach(), entropy.cpu().numpy(), state_value
-
-    def compute_rtg(self, rewards, discount_factor):
-        """
-        Return rewards-to-go for each time-step
-        We go reverse to get the full trajectory rtgs
-        """
-        rtgs = []
-        
-        for ep_rew in reversed(rewards):
-            discounted_reward = 0  # Initialize with a float
-
-            for rew in reversed(ep_rew):
-                discounted_reward = rew + discount_factor * discounted_reward
-                rtgs.insert(0, discounted_reward)
-        
-        rtgs = torch.tensor(rtgs, dtype=torch.float32, device=device)
-        
-        return rtgs
-
-    def evaluate_actions(self, states, actions):
-        V = self.critic(states)
-
-        mean = self.actor(states)
-        dist = distributions.MultivariateNormal(mean, self.cov_mat)
-        log_probs = dist.log_prob(actions)
-
-        return V, log_probs
-
-    def sample_with_indices(self, batch_size: int, env=None):
-        """
-        Sample the buffer and return both the sampled data and their corresponding indices.
-        :param batch_size: Number of elements to sample
-        :param env: Associated gym VecEnv to normalize observations/rewards when sampling
-        :return: Tuple containing (batch_indices, batch_states, batch_actions, batch_values, batch_log_probs,
-                batch_advantages, batch_returns)
-        """
-        upper_bound = self.rollout_buffer_size if self.rollout_buffer.full else self.rollout_buffer.pos
-        batch_indices = np.random.randint(0, upper_bound, size=batch_size)
-        batch_data = self.rollout_buffer._get_samples(batch_indices, env=env)
-
-        return batch_indices, batch_data
 
     def rollout(self):
         """
-        Get the batch data from self.rollout_buffer
+        Collect data with multiple agents.
+        self.: number of timesteps to collect data for each agent
         """
+        states = self.env.reset()
 
-        # reset the rollout buffer
-        self.rollout_buffer.reset()
-
-        state = self.env.reset()
-        dones = [False] * self.n_envs
-
-        state = torch.as_tensor(state, dtype=torch.float32, device=device)
+        # collecting T data for each agent 
+        # T= self.n_step_per_batch here
         rews = []
-        rew_agent = [0] * self.n_envs
-        for step in range(self.n_step):
-            action, log_prob, entropy, state_value = self.get_action(state)
+        rew_agent = [0 for _ in range(self.n_actors)]
+        for step in range(0, self.n_step_per_batch):
+            with torch.no_grad():
+                # run old policy in env for T timesteps
+                actions, log_probs, entropys, state_values = self.actor_critic.get_action_and_probs_and_values(self.env, torch.from_numpy(states).float().to(device), None)
 
-            next_state, reward, dones, infos = self.env.step(action)
-            next_state = torch.as_tensor(next_state, dtype=torch.float32, device=device)
-            self.rollout_buffer.compute_returns_and_advantage(last_values=state_value.detach(), dones=dones)
-            self.rollout_buffer.add(obs=state, action=action, reward=reward, episode_start=dones, log_prob=log_prob,
-                                    value=state_value.detach())
+            # step
+            next_states, rewards, dones, _ = self.env.step(actions)
+
+            self.states[step] = torch.from_numpy(states).float().to(device)
+            self.dones[step] = torch.from_numpy(dones).float().to(device)
+            self.actions[step] = torch.from_numpy(actions).float().to(device)
+            self.log_probs[step] = log_probs
+            self.rewards[step] = torch.from_numpy(rewards).float().to(device)
+            self.values[step] = state_values.flatten()
             
-            state = next_state
-
+            states = next_states
+            rew_agent += rewards
+            for idx, done in enumerate(dones):
+                if done:
+                    rews.append(rew_agent[idx])
+                    rew_agent[idx] = 0
             
-        batch_states, batch_actions, batch_values, batch_log_probs, batch_advantages, batch_returns = self.rollout_buffer.sample(batch_size=self.n_step, env=self.env)
+        # check if any element of rews is invalid
+        if np.isnan(np.mean(np.array(rews))):
+            print(np.array(rews))
+            quit()
 
-        # keep track of the rewards and report to wandb
-        wandb.log({"reward": torch.mean(batch_returns).item()})
+        wandb.log({"reward": np.mean(np.array(rews))})
+        # finished collecting T samples for each agent
+        # save the reward to self.temp_rew
 
-        return batch_states, batch_actions, batch_values, batch_log_probs, batch_advantages, batch_returns
+        with torch.no_grad():
+            next_state_values = self.actor_critic.get_value(torch.from_numpy(next_states).float().to(device)).reshape(1, -1)
+            self.advantages = torch.zeros_like(self.rewards).to(device)
+            lastgaelam = 0
 
-    def learn(self, n_epochs):
-        t_so_far = 0
-        while t_so_far < n_epochs:
-            # rollout to take the data
-            batch_states, batch_actions, batch_values, batch_log_probs, batch_advantages, batch_returns = self.rollout()
-            
-            t_so_far += len(batch_returns)
-            
-            # log t_so_far to wandb
-            wandb.log({"t_so_far": t_so_far})
+            for t in reversed(range(self.n_step_per_batch)):
+                if t == self.n_step_per_batch - 1:
+                    next_non_terminal = 1.0 - self.dones[-1]
+                    next_state_value = next_state_values
+                else:
+                    next_non_terminal = 1.0 - self.dones[t + 1]
+                    next_state_value = self.values[t + 1]
 
-            # compute advantage
-            A_k = batch_advantages
+                delta = self.rewards[t] + self.gamma * next_state_value * next_non_terminal - self.values[t]
+                self.advantages[t] = lastgaelam = delta + self.gamma * self.lambd * next_non_terminal * lastgaelam
+            self.returns = self.advantages + self.values
 
-            # normalize advantage
-            A_k = (A_k - A_k.mean()) / (A_k.std(unbiased=False) + 1e-10)
+        # flatten the batch and then return
+        b_states = self.states.reshape(-1, self.env.observation_space.shape[0])
+        b_actions = self.actions.reshape(-1, self.env.action_space.shape[0])
+        b_log_probs = self.log_probs.reshape(-1)
+        b_advantages = self.advantages.reshape(-1)
+        b_returns = self.returns.reshape(-1)
+        b_values = self.values.reshape(-1)
 
-            # compute the loss
-            # actor loss
-            # the new policy probability = taking the probs with current actor for the action considering
-            # compute the log probability for current policy
-            for learning_step in range(self.n_update_per_epoch):
-                V, current_log_action = self.evaluate_actions(batch_states, batch_actions)
+        return b_states, b_actions, b_log_probs, b_advantages, b_returns, b_values
+    
+    def learn(self):
+        b_indicies = np.arange(self.batch_size)
+        num_mini_batch = 4
+        mini_batch_size = self.batch_size // num_mini_batch
 
-                # the old log probability is calculated in rollout
-                # now we calculate the ratio
-                ratio = torch.exp(current_log_action.view(len(batch_log_probs)) - batch_log_probs)
-
-                surrogate_loss_1 = ratio * A_k
-                surrogate_loss_2 = torch.clamp(ratio, 1 - self.epsilon, 1 + self.epsilon) * A_k
-
-                surrogate_loss = (- torch.min(surrogate_loss_1, surrogate_loss_2)).mean()
-                # self.actor_optimizer.zero_grad()
-                # surrogate_loss.backward()
-                # self.actor_optimizer.step()
-
-                critic_loss = nn.MSELoss()(V.flatten(), batch_advantages + batch_values)
-                actor_loss = surrogate_loss
-
-                self.actor_optimizer.zero_grad()
-                actor_loss.backward(retain_graph=True)
-                # Clip gradient norms
-                # torch.nn.utils.clip_grad_norm_(self.actor.parameters(), max_norm=0.5)
-                self.actor_optimizer.step()
-
-                self.critic_optimizer.zero_grad()
-                critic_loss.backward()
-                # torch.nn.utils.clip_grad_norm_(self.critic.parameters(), max_norm=0.5)
-                self.critic_optimizer.step()
+        for epoch in range(self.n_updates):
+            # collect batch data
+            b_states, b_actions, b_log_probs, b_advantages, b_returns, b_values = self.rollout()
 
 
-                wandb.log({"actor_loss": surrogate_loss, "critic_loss": critic_loss})
+            for update_epoch in range(self.update_epochs):
+                np.random.shuffle(b_indicies)
+                for start in range(0, self.batch_size, mini_batch_size):
+                    end = start + mini_batch_size
+                    mb_inds = b_indicies[start:end]
+
+                    # minibatch advantage
+                    mb_advantages = b_advantages[mb_inds]
+                    mb_advantages = (mb_advantages - mb_advantages.mean()) / (mb_advantages.std() + 1e-8)
+
+                    # calculate the log_probs for the current policy
+                    _, current_log_probs, entropy, current_values = self.actor_critic.get_action_and_probs_and_values(self.env, b_states[mb_inds], b_actions[mb_inds])
+
+                    # calculate the ratio
+                    ratio = torch.exp(current_log_probs - b_log_probs[mb_inds])
+                    # calculate the surrogate loss
+                    surrogate_loss_1 = ratio * mb_advantages
+                    surrogate_loss_2 = torch.clamp(ratio, 1 - self.epsilon, 1 + self.epsilon) * mb_advantages
+
+                    surrogate_loss = (-torch.min(surrogate_loss_1, surrogate_loss_2)).mean()
+
+                    # calculate the value loss
+                    criterion = nn.MSELoss()
+                    value_loss = criterion(b_values[mb_inds], current_values.squeeze())
+
+                    loss = surrogate_loss + self.vf_coef * value_loss - self.ent_coef * entropy.mean()
+
+                    self.optimizer.zero_grad()
+                    loss.backward()
+                    nn.utils.clip_grad_norm_(self.actor_critic.parameters(), 0.5)
+                    self.optimizer.step()
+
+                    # log the loss to wandb
+                    wandb.log({"loss": loss.item()})
+                    wandb.log({"surrogate_loss": surrogate_loss.item()})
+                    wandb.log({"value_loss": value_loss.item()})
 
 
-        
+
+
+
+
