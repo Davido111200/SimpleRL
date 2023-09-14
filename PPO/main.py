@@ -16,14 +16,15 @@ from stable_baselines3.common.env_util import make_vec_env
 
 import wandb  
 
-# device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 # now can support cpu only
-device = torch.device("cpu")
+# device = torch.device("cpu")
 
 torch.autograd.set_detect_anomaly(True)
 
 def main(n_epochs, env_name, n_envs, n_step_per_batch, epsilon, vf_coef, ent_coef):
     # init wandb
+    print(device)
     wandb.init(project="ppo")
     # should have parallel environments
     # create the vectorized environment
@@ -34,11 +35,11 @@ def main(n_epochs, env_name, n_envs, n_step_per_batch, epsilon, vf_coef, ent_coe
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--n_epochs", type=int, default=3000000)
+    parser.add_argument("--n_epochs", type=int, default=100000000)
     parser.add_argument("--n_envs", type=int, default=4)
     parser.add_argument("--epsilon", type=float, default=0.2)
     parser.add_argument("--env_name", type=str, default="Walker2d-v4")
-    parser.add_argument("--n_step_per_batch", type=int, default=128)
+    parser.add_argument("--n_step_per_batch", type=int, default=1024)
     parser.add_argument("--vf_coef", type=float, default=0.5)
     parser.add_argument("--ent_coef", type=float, default=0.01)
     args = parser.parse_args()

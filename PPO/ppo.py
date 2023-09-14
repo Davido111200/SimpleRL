@@ -14,8 +14,8 @@ from stable_baselines3.common.buffers import RolloutBuffer
 from torch.distributions import Categorical
 import wandb  
 
-# device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-device = torch.device('cpu')
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+# device = torch.device('cpu')
 
 class Actor(nn.Module):
     def __init__(self, n_state, n_action) -> None:
@@ -152,6 +152,7 @@ class PPO:
 
         state = torch.as_tensor(state, dtype=torch.float32, device=device)
         rews = []
+        rew_agent = [0] * self.n_envs
         for step in range(self.n_step):
             action, log_prob, entropy, state_value = self.get_action(state)
 
@@ -162,8 +163,8 @@ class PPO:
                                     value=state_value.detach())
             
             state = next_state
+
             
-                            
         batch_states, batch_actions, batch_values, batch_log_probs, batch_advantages, batch_returns = self.rollout_buffer.sample(batch_size=self.n_step, env=self.env)
 
         # keep track of the rewards and report to wandb

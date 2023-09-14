@@ -8,7 +8,7 @@ import gymnasium as gym
 import numpy as np
 import matplotlib.pyplot as plt
 import argparse
-from collections import namedtuple
+from collections import namedtuple, deque
 from stable_baselines3.common.buffers import RolloutBuffer
 from stable_baselines3.common.env_util import make_vec_env
 
@@ -63,6 +63,8 @@ class PPO():
         self.batch_size = int(n_envs * self.n_step_per_batch)
         self.update_epochs = 4 # the k-epoch 
         self.n_updates = self.n_epochs // self.batch_size
+        self.cur_highest_reward = -1000000
+        self.temp_rew = deque([], max_len=1000)
 
         # hyperparameters
         self.lambd = 0.95
@@ -90,6 +92,7 @@ class PPO():
         # collecting T data for each agent 
         # T= self.n_step_per_batch here
         rews = []
+        rew_agent = [0 for _ in range(self.n_actors)]
         for step in range(0, self.n_step_per_batch):
             with torch.no_grad():
                 # run old policy in env for T timesteps
@@ -106,13 +109,21 @@ class PPO():
             self.values[step] = state_values.flatten()
             
             states = next_states
+            rew_agent += rewards
+            for idx, done in enumerate(dones):
+                if done:
+                    rews.append(rew_agent[idx])
+                    rew_agent[idx] = 0
+            
+        # check if any element of rews is invalid
+        if np.isnan(np.mean(np.array(rews))):
+            print(np.array(rews))
+            quit()
 
-            rews.append(rewards)
-        
-        wandb.log({"reward": np.mean(np.sum(rews, axis=0))})
-
+        wandb.log({"reward": np.mean(np.array(rews))})
         # finished collecting T samples for each agent
-        # now we need to calculate the advantages and returns
+        # save the reward to self.temp_rew
+        self.temp_rew.append(np.mean(np.array(rews)))
 
         with torch.no_grad():
             next_state_values = self.actor_critic.get_value(torch.from_numpy(next_states).float().to(device)).reshape(1, -1)
@@ -187,6 +198,8 @@ class PPO():
                     wandb.log({"loss": loss.item()})
                     wandb.log({"surrogate_loss": surrogate_loss.item()})
                     wandb.log({"value_loss": value_loss.item()})
+
+
 
 
 

@@ -7,14 +7,14 @@
 #SBATCH --gres=gpu:2
 
 cd ~/dai/SimpleRL/PPO
+source ppo/bin/activate
 
-n_epochs=1000000
-n_cpu=4
-n_trials=3
-env_name='Hopper-v4'
+n_epochs=90000000
+n_envs=16
 epsilon=0.2
-batch_size=64
+env_name='Walker2d-v4'
+n_step_per_batch=1024
+vf_coef=0.5
+ent_coef=0.01
 
-python3 main.py --n_epochs $n_epochs --n_cpu $n_cpu --n_trials $n_trials --env_name $env_name --epsilon $epsilon --batch_size $batch_size
-
-
+python3 main.py --n_epochs $n_epochs --n_envs $n_envs --epsilon $epsilon --env_name $env_name --n_step_per_batch $n_step_per_batch --vf_coef $vf_coef --ent_coef $ent_coef
