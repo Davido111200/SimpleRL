@@ -79,6 +79,7 @@ class PPO():
         self.dones = torch.zeros((self.n_step_per_batch, n_envs)).to(device)
         self.values = torch.zeros((self.n_step_per_batch, n_envs)).to(device)
         self.rewards = torch.zeros((self.n_step_per_batch, n_envs)).to(device)
+        self.next_states = torch.zeros((self.n_step_per_batch, n_envs, self.env.observation_space.shape[0])).to(device)
 
 
     def rollout(self):
@@ -171,7 +172,7 @@ class PPO():
                     mb_advantages = (mb_advantages - mb_advantages.mean()) / (mb_advantages.std() + 1e-8)
 
                     # calculate the log_probs for the current policy
-                    _, current_log_probs, entropy, current_values = self.actor_critic.get_action_and_probs_and_values(self.env, b_states[mb_inds], b_actions[mb_inds])
+                    _, current_log_probs, entropy, old_values = self.actor_critic.get_action_and_probs_and_values(self.env, b_states[mb_inds], b_actions[mb_inds])
 
                     # calculate the ratio
                     ratio = torch.exp(current_log_probs - b_log_probs[mb_inds])
@@ -182,8 +183,9 @@ class PPO():
                     surrogate_loss = (-torch.min(surrogate_loss_1, surrogate_loss_2)).mean()
 
                     # calculate the value loss
+                    target_values = b_returns[mb_inds]
                     criterion = nn.MSELoss()
-                    value_loss = criterion(b_values[mb_inds], current_values.squeeze())
+                    value_loss = criterion(old_values.squeeze(), target_values)
 
                     loss = surrogate_loss + self.vf_coef * value_loss - self.ent_coef * entropy.mean()
 
