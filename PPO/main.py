@@ -44,3 +44,4 @@ if __name__ == "__main__":
     parser.add_argument("--ent_coef", type=float, default=0.01)
     args = parser.parse_args()
     main(args.n_epochs, args.env_name, args.n_envs, args.n_step_per_batch, args.epsilon, args.vf_coef, args.ent_coef)
+    
